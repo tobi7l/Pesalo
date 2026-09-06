@@ -70,7 +70,97 @@ const FoodApi = (() => {
         crudo:  { kcal: 71, protein: 17, carbs: 0, fat: 0.6 },
         cocido: { kcal: 90, protein: 18, carbs: 0, fat: 1.3 }
     }},
-    { name: "Jamon cocido", base: { kcal: 145, protein: 21, carbs: 1.5, fat: 6 } }
+    { name: "Jamon cocido", base: { kcal: 145, protein: 21, carbs: 1.5, fat: 6 } },
+
+    // Cortes de carne vacuna
+    { name: "Asado (costillar)", variants: {
+        crudo:  { kcal: 250, protein: 17, carbs: 0, fat: 20 },
+        cocido: { kcal: 330, protein: 25, carbs: 0, fat: 25 }
+    }},
+    { name: "Vacio", variants: {
+        crudo:  { kcal: 180, protein: 20, carbs: 0, fat: 11 },
+        cocido: { kcal: 250, protein: 28, carbs: 0, fat: 15 }
+    }},
+    { name: "Matambre de vaca", variants: {
+        crudo:  { kcal: 200, protein: 19, carbs: 0, fat: 14 },
+        cocido: { kcal: 280, protein: 27, carbs: 0, fat: 19 }
+    }},
+    { name: "Bife de chorizo", variants: {
+        crudo:  { kcal: 150, protein: 21, carbs: 0, fat: 7 },
+        cocido: { kcal: 210, protein: 27, carbs: 0, fat: 10 }
+    }},
+    { name: "Bife de lomo", variants: {
+        crudo:  { kcal: 135, protein: 21, carbs: 0, fat: 5 },
+        cocido: { kcal: 190, protein: 28, carbs: 0, fat: 8 }
+    }},
+    { name: "Ojo de bife", variants: {
+        crudo:  { kcal: 180, protein: 20, carbs: 0, fat: 11 },
+        cocido: { kcal: 250, protein: 26, carbs: 0, fat: 15 }
+    }},
+    { name: "Nalga", variants: {
+        crudo:  { kcal: 120, protein: 22, carbs: 0, fat: 3 },
+        cocido: { kcal: 175, protein: 29, carbs: 0, fat: 6 }
+    }},
+    { name: "Cuadrada", variants: {
+        crudo:  { kcal: 125, protein: 21, carbs: 0, fat: 4 },
+        cocido: { kcal: 180, protein: 28, carbs: 0, fat: 7 }
+    }},
+    { name: "Peceto", variants: {
+        crudo:  { kcal: 115, protein: 22, carbs: 0, fat: 2.5 },
+        cocido: { kcal: 170, protein: 29, carbs: 0, fat: 5 }
+    }},
+    { name: "Paleta", variants: {
+        crudo:  { kcal: 150, protein: 20, carbs: 0, fat: 7 },
+        cocido: { kcal: 215, protein: 27, carbs: 0, fat: 11 }
+    }},
+    { name: "Falda", variants: {
+        crudo:  { kcal: 170, protein: 20, carbs: 0, fat: 9 },
+        cocido: { kcal: 235, protein: 27, carbs: 0, fat: 13 }
+    }},
+    { name: "Entraña", variants: {
+        crudo:  { kcal: 190, protein: 20, carbs: 0, fat: 12 },
+        cocido: { kcal: 260, protein: 27, carbs: 0, fat: 16 }
+    }},
+    { name: "Colita de cuadril", variants: {
+        crudo:  { kcal: 140, protein: 21, carbs: 0, fat: 6 },
+        cocido: { kcal: 200, protein: 28, carbs: 0, fat: 9 }
+    }},
+    { name: "Osobuco", variants: {
+        crudo:  { kcal: 130, protein: 20, carbs: 0, fat: 5 },
+        cocido: { kcal: 190, protein: 27, carbs: 0, fat: 8 }
+    }},
+    { name: "Carne picada", variants: {
+        crudo:  { kcal: 215, protein: 17, carbs: 0, fat: 16 },
+        cocido: { kcal: 250, protein: 25, carbs: 0, fat: 17 }
+    }},
+
+    // Cortes de cerdo
+    { name: "Bondiola de cerdo", variants: {
+        crudo:  { kcal: 215, protein: 18, carbs: 0, fat: 15 },
+        cocido: { kcal: 280, protein: 24, carbs: 0, fat: 19 }
+    }},
+    { name: "Carre de cerdo", variants: {
+        crudo:  { kcal: 150, protein: 21, carbs: 0, fat: 7 },
+        cocido: { kcal: 210, protein: 27, carbs: 0, fat: 10 }
+    }},
+    { name: "Matambre de cerdo", variants: {
+        crudo:  { kcal: 200, protein: 18, carbs: 0, fat: 14 },
+        cocido: { kcal: 270, protein: 24, carbs: 0, fat: 18 }
+    }},
+    { name: "Costillar de cerdo", variants: {
+        crudo:  { kcal: 260, protein: 17, carbs: 0, fat: 21 },
+        cocido: { kcal: 330, protein: 23, carbs: 0, fat: 26 }
+    }},
+
+    // Mas cortes de pollo
+    { name: "Muslo de pollo", variants: {
+        crudo:  { kcal: 120, protein: 17, carbs: 0, fat: 5.7 },
+        cocido: { kcal: 180, protein: 24, carbs: 0, fat: 8.5 }
+    }},
+    { name: "Alitas de pollo", variants: {
+        crudo:  { kcal: 200, protein: 18, carbs: 0, fat: 14 },
+        cocido: { kcal: 290, protein: 27, carbs: 0, fat: 19 }
+    }}
   ];
 
   function toSearchResult(food) {
@@ -129,10 +219,15 @@ const FoodApi = (() => {
     if (!query.trim()) {
       return { results: local, source: "common", error: null };
     }
+    // Si ya tenemos el alimento en la lista local (cortes, comidas caseras, etc.)
+    // no consultamos USDA: evita mezclar resultados en ingles que no aplican
+    // (ej. "paleta" trayendo paletas de helado en vez del corte de carne).
+    if (local.length > 0) {
+      return { results: local, source: "common", error: null };
+    }
     try {
       const usdaResults = await searchUsda(query, apiKey);
-      const merged = [...local, ...usdaResults];
-      return { results: merged, source: "usda", error: null };
+      return { results: usdaResults, source: "usda", error: null };
     } catch (err) {
       return { results: local, source: "common", error: err.message };
     }
