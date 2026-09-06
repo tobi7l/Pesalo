@@ -257,7 +257,7 @@
     $("portionGrams").value = 100;
     if (food.variants) {
       $("portionVariantPills").hidden = false;
-      setPendingVariant("cocido");
+      setPendingVariant("crudo");
     } else {
       $("portionVariantPills").hidden = true;
       state.pendingVariant = null;

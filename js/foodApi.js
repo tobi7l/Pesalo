@@ -177,7 +177,7 @@ const FoodApi = (() => {
   ];
 
   function toSearchResult(food) {
-    const defaults = food.variants ? food.variants.cocido : food.base;
+    const defaults = food.variants ? food.variants.crudo : food.base;
     return {
       name: food.name,
       kcal: defaults.kcal,
