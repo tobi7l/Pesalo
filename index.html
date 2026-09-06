@@ -35,31 +35,23 @@
             <circle cx="70" cy="70" r="62" class="ring-fg" id="calRing"></circle>
           </svg>
           <div class="ring-center">
-            <div class="ring-kcal" id="kcalRemaining">2000</div>
-            <div class="ring-sub" id="kcalRemainingLabel">restantes</div>
+            <div class="ring-kcal"><span id="kcalEatenTxt">0</span><span class="ring-kcal-sep">/</span><span id="kcalGoalTxt">2000</span></div>
+            <div class="ring-sub">kcal</div>
           </div>
         </div>
-        <div class="ring-legend">
-          <div><span id="kcalGoalTxt">2000</span> meta</div>
-          <div><span id="kcalEatenTxt">0</span> consumidas</div>
-        </div>
-      </div>
-
-      <div class="card macros-card">
-        <div class="macro-row">
-          <div class="macro-label">Proteinas</div>
-          <div class="bar-track"><div class="bar-fill protein" id="barProtein"></div></div>
-          <div class="macro-val" id="txtProtein">0 / 0 g</div>
-        </div>
-        <div class="macro-row">
-          <div class="macro-label">Carbohidratos</div>
-          <div class="bar-track"><div class="bar-fill carbs" id="barCarbs"></div></div>
-          <div class="macro-val" id="txtCarbs">0 / 0 g</div>
-        </div>
-        <div class="macro-row">
-          <div class="macro-label">Grasas</div>
-          <div class="bar-track"><div class="bar-fill fat" id="barFat"></div></div>
-          <div class="macro-val" id="txtFat">0 / 0 g</div>
+        <div class="ring-macros">
+          <div class="rm-block">
+            <div class="rm-top"><span class="dot protein"></span>Proteinas</div>
+            <div class="rm-bottom"><div class="bar-track mini"><div class="bar-fill protein" id="barProtein"></div></div><span class="rm-val" id="txtProtein">0/0g</span></div>
+          </div>
+          <div class="rm-block">
+            <div class="rm-top"><span class="dot carbs"></span>Carbohidratos</div>
+            <div class="rm-bottom"><div class="bar-track mini"><div class="bar-fill carbs" id="barCarbs"></div></div><span class="rm-val" id="txtCarbs">0/0g</span></div>
+          </div>
+          <div class="rm-block">
+            <div class="rm-top"><span class="dot fat"></span>Grasas</div>
+            <div class="rm-bottom"><div class="bar-track mini"><div class="bar-fill fat" id="barFat"></div></div><span class="rm-val" id="txtFat">0/0g</span></div>
+          </div>
         </div>
       </div>
 

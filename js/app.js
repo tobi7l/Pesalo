@@ -95,17 +95,16 @@
       return acc;
     }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
 
-    const remaining = Math.round(settings.goalKcal - totals.kcal);
-    $("kcalRemaining").textContent = remaining;
-    $("kcalRemainingLabel").textContent = remaining >= 0 ? "restantes" : "de exceso";
+    const over = totals.kcal > settings.goalKcal;
     $("kcalGoalTxt").textContent = settings.goalKcal;
     $("kcalEatenTxt").textContent = Math.round(totals.kcal);
+    $("kcalEatenTxt").style.color = over ? "var(--red)" : "var(--green)";
 
     const circumference = 389.6;
     const pctEaten = Math.max(0, Math.min(1, totals.kcal / settings.goalKcal));
     const ring = $("calRing");
     ring.style.strokeDashoffset = circumference * (1 - pctEaten);
-    ring.style.stroke = totals.kcal > settings.goalKcal ? "var(--red)" : "var(--green)";
+    ring.style.stroke = over ? "var(--red)" : "var(--green)";
 
     setBar("Protein", totals.protein, targets.proteinG);
     setBar("Carbs", totals.carbs, targets.carbsG);
@@ -117,7 +116,7 @@
   function setBar(key, value, target) {
     const pct = target > 0 ? Math.max(0, Math.min(100, (value / target) * 100)) : 0;
     $("bar" + key).style.width = pct + "%";
-    $("txt" + key).textContent = `${Math.round(value)} / ${target} g`;
+    $("txt" + key).textContent = `${Math.round(value)}/${target}g`;
   }
 
   function mealOf(entry) {
