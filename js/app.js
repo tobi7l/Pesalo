@@ -38,8 +38,10 @@
       const mealLabel = MEALS.find(m => m.key === state.selectedMeal).label;
       $("buscarTitle").textContent = "Agregar a " + mealLabel;
       $("searchInput").value = "";
-      renderResults(FoodApi.searchCommon(""), "common");
-      $("commonTitle").textContent = "Alimentos frecuentes";
+      $("resultsList").innerHTML = "";
+      $("commonTitle").hidden = true;
+      $("searchStatus").hidden = true;
+      $("searchHint").hidden = false;
       setTimeout(() => $("searchInput").focus(), 200);
     }
     if (name === "ajustes") loadSettingsIntoForm();
@@ -191,15 +193,18 @@
     const q = e.target.value;
     clearTimeout(state.searchDebounce);
     if (!q.trim()) {
-      $("commonTitle").textContent = "Alimentos frecuentes";
+      $("searchHint").hidden = false;
+      $("commonTitle").hidden = true;
       $("searchStatus").hidden = true;
-      renderResults(FoodApi.searchCommon(""), "common");
+      $("resultsList").innerHTML = "";
       return;
     }
+    $("searchHint").hidden = true;
     $("searchStatus").hidden = false;
     $("searchStatus").textContent = "Buscando...";
     state.searchDebounce = setTimeout(async () => {
       const { results, source, error } = await FoodApi.search(q, Storage.getApiKey());
+      $("commonTitle").hidden = false;
       $("commonTitle").textContent = "Resultados";
       if (error) {
         $("searchStatus").hidden = false;
@@ -245,24 +250,49 @@
     btn.addEventListener("click", () => setPendingMeal(btn.dataset.meal));
   });
 
+  function setPendingVariant(variant) {
+    state.pendingVariant = variant;
+    document.querySelectorAll("#portionVariantPills .meal-pill").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.variant === variant);
+    });
+    updatePortionPreview();
+  }
+
+  document.querySelectorAll("#portionVariantPills .meal-pill").forEach(btn => {
+    btn.addEventListener("click", () => setPendingVariant(btn.dataset.variant));
+  });
+
+  function currentFoodMacros() {
+    const f = state.pendingFood;
+    if (!f) return null;
+    return f.variants ? f.variants[state.pendingVariant] : f;
+  }
+
   function openPortionModal(food) {
     state.pendingFood = food;
     $("portionFoodName").textContent = food.name;
     $("portionGrams").value = 100;
+    if (food.variants) {
+      $("portionVariantPills").hidden = false;
+      setPendingVariant("cocido");
+    } else {
+      $("portionVariantPills").hidden = true;
+      state.pendingVariant = null;
+      updatePortionPreview();
+    }
     setPendingMeal(state.selectedMeal || guessMealByTime());
-    updatePortionPreview();
     $("portionModal").hidden = false;
   }
 
   function updatePortionPreview() {
     const grams = parseFloat($("portionGrams").value) || 0;
-    const f = state.pendingFood;
-    if (!f) return;
+    const source = currentFoodMacros();
+    if (!source) return;
     const factor = grams / 100;
-    $("ppKcal").textContent = Math.round(f.kcal * factor);
-    $("ppProtein").textContent = Math.round(f.protein * factor);
-    $("ppCarbs").textContent = Math.round(f.carbs * factor);
-    $("ppFat").textContent = Math.round(f.fat * factor);
+    $("ppKcal").textContent = Math.round(source.kcal * factor);
+    $("ppProtein").textContent = Math.round(source.protein * factor);
+    $("ppCarbs").textContent = Math.round(source.carbs * factor);
+    $("ppFat").textContent = Math.round(source.fat * factor);
   }
 
   $("portionGrams").addEventListener("input", updatePortionPreview);
@@ -271,22 +301,24 @@
   $("portionConfirm").addEventListener("click", () => {
     const grams = parseFloat($("portionGrams").value) || 0;
     const f = state.pendingFood;
-    if (!f || grams <= 0) return;
+    const source = currentFoodMacros();
+    if (!f || !source || grams <= 0) return;
     const factor = grams / 100;
+    const displayName = f.variants ? `${f.name} (${state.pendingVariant})` : f.name;
     const entry = {
       id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
-      name: f.name,
+      name: displayName,
       grams,
-      kcal: f.kcal * factor,
-      protein: f.protein * factor,
-      carbs: f.carbs * factor,
-      fat: f.fat * factor,
+      kcal: source.kcal * factor,
+      protein: source.protein * factor,
+      carbs: source.carbs * factor,
+      fat: source.fat * factor,
       meal: state.pendingMeal,
       time: new Date().toISOString()
     };
     const dateKey = Storage.todayKey(state.currentDate);
     Storage.addEntry(dateKey, entry);
-    Storage.addRecent({ name: f.name, kcal: f.kcal, protein: f.protein, carbs: f.carbs, fat: f.fat });
+    Storage.addRecent({ name: displayName, kcal: source.kcal, protein: source.protein, carbs: source.carbs, fat: source.fat });
     $("portionModal").hidden = true;
     state.pendingFood = null;
     showToast("Agregado a " + fmtDateLabel(state.currentDate));
