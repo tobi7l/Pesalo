@@ -247,6 +247,24 @@ html, body {
 .modal-sheet h3 { margin: 0 0 4px; font-size: 18px; }
 .modal-hint { color: var(--text-dim); font-size: 12px; margin: 0 0 14px; }
 
+.unit-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--card-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 12px; margin: 16px 0 0;
+}
+.unit-row[hidden] { display: none; }
+.unit-label { font-size: 13px; color: var(--text-dim); }
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper-btn {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.stepper-input {
+  width: 40px; text-align: center; font-size: 16px; font-weight: 700;
+  background: none; border: none; color: var(--text);
+}
+
 .portion-input-row { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
 .portion-input-row input {
   flex: 1; font-size: 22px; font-weight: 700; padding: 12px 14px;

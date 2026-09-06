@@ -110,6 +110,14 @@
         <button type="button" class="meal-pill" data-meal="merienda">Merienda</button>
         <button type="button" class="meal-pill" data-meal="cena">Cena</button>
       </div>
+      <div class="unit-row" id="unitRow" hidden>
+        <span class="unit-label" id="unitLabel">Cantidad</span>
+        <div class="stepper">
+          <button type="button" id="unitMinus" class="stepper-btn">&#8722;</button>
+          <input type="number" id="unitQty" class="stepper-input" value="1" min="0" step="1" inputmode="numeric">
+          <button type="button" id="unitPlus" class="stepper-btn">+</button>
+        </div>
+      </div>
       <div class="portion-input-row">
         <input type="number" id="portionGrams" value="100" min="0" step="1" inputmode="decimal">
         <span>gramos</span>

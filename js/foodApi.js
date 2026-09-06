@@ -12,9 +12,9 @@ const FoodApi = (() => {
         crudo:  { kcal: 120, protein: 22.5, carbs: 0, fat: 2.6 },
         cocido: { kcal: 165, protein: 31, carbs: 0, fat: 3.6 }
     }},
-    { name: "Huevo entero", base: { kcal: 155, protein: 13, carbs: 1.1, fat: 11 } },
-    { name: "Banana", base: { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 } },
-    { name: "Manzana", base: { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 } },
+    { name: "Huevo entero", base: { kcal: 155, protein: 13, carbs: 1.1, fat: 11 }, unitGrams: 50 },
+    { name: "Banana", base: { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 }, unitGrams: 120 },
+    { name: "Manzana", base: { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 }, unitGrams: 180 },
     { name: "Pan lactal blanco", base: { kcal: 265, protein: 9, carbs: 49, fat: 3.2 } },
     { name: "Fideos", variants: {
         crudo:  { kcal: 371, protein: 13, carbs: 74, fat: 1.5 },
@@ -31,7 +31,7 @@ const FoodApi = (() => {
     { name: "Atun al natural", base: { kcal: 116, protein: 26, carbs: 0, fat: 1 } },
     { name: "Yogur natural entero", base: { kcal: 61, protein: 3.5, carbs: 4.7, fat: 3.3 } },
     { name: "Leche descremada", base: { kcal: 35, protein: 3.4, carbs: 5, fat: 0.1 } },
-    { name: "Palta", base: { kcal: 160, protein: 2, carbs: 8.5, fat: 14.7 } },
+    { name: "Palta", base: { kcal: 160, protein: 2, carbs: 8.5, fat: 14.7 }, unitGrams: 150 },
     { name: "Almendras", base: { kcal: 579, protein: 21, carbs: 22, fat: 50 } },
     { name: "Aceite de oliva", base: { kcal: 884, protein: 0, carbs: 0, fat: 100 } },
     { name: "Avena", variants: {
@@ -56,7 +56,7 @@ const FoodApi = (() => {
         crudo:  { kcal: 368, protein: 14, carbs: 64, fat: 6 },
         cocido: { kcal: 120, protein: 4.4, carbs: 21, fat: 1.9 }
     }},
-    { name: "Naranja", base: { kcal: 47, protein: 0.9, carbs: 12, fat: 0.1 } },
+    { name: "Naranja", base: { kcal: 47, protein: 0.9, carbs: 12, fat: 0.1 }, unitGrams: 130 },
     { name: "Tomate", base: { kcal: 18, protein: 0.9, carbs: 3.9, fat: 0.2 } },
     { name: "Zanahoria", base: { kcal: 41, protein: 0.9, carbs: 10, fat: 0.2 } },
     { name: "Merluza", variants: {
@@ -185,6 +185,7 @@ const FoodApi = (() => {
       carbs: defaults.carbs,
       fat: defaults.fat,
       variants: food.variants || null,
+      unitGrams: food.unitGrams || null,
       source: "common"
     };
   }

@@ -254,7 +254,17 @@
   function openPortionModal(food) {
     state.pendingFood = food;
     $("portionFoodName").textContent = food.name;
-    $("portionGrams").value = 100;
+
+    if (food.unitGrams) {
+      $("unitRow").hidden = false;
+      $("unitLabel").textContent = `Cantidad (1 = ${food.unitGrams} g)`;
+      $("unitQty").value = 1;
+      $("portionGrams").value = food.unitGrams;
+    } else {
+      $("unitRow").hidden = true;
+      $("portionGrams").value = 100;
+    }
+
     if (food.variants) {
       $("portionVariantPills").hidden = false;
       setPendingVariant("crudo");
@@ -266,6 +276,24 @@
     setPendingMeal(state.selectedMeal || guessMealByTime());
     $("portionModal").hidden = false;
   }
+
+  function applyUnitQty() {
+    const food = state.pendingFood;
+    if (!food || !food.unitGrams) return;
+    const qty = parseFloat($("unitQty").value) || 0;
+    $("portionGrams").value = Math.round(qty * food.unitGrams);
+    updatePortionPreview();
+  }
+
+  $("unitQty").addEventListener("input", applyUnitQty);
+  $("unitPlus").addEventListener("click", () => {
+    $("unitQty").value = (parseFloat($("unitQty").value) || 0) + 1;
+    applyUnitQty();
+  });
+  $("unitMinus").addEventListener("click", () => {
+    $("unitQty").value = Math.max(0, (parseFloat($("unitQty").value) || 0) - 1);
+    applyUnitQty();
+  });
 
   function updatePortionPreview() {
     const grams = parseFloat($("portionGrams").value) || 0;
