@@ -129,7 +129,10 @@
     container.innerHTML = "";
     MEALS.forEach(meal => {
       const mealEntries = entries.filter(e => mealOf(e) === meal.key);
-      const kcal = mealEntries.reduce((sum, e) => sum + e.kcal, 0);
+      const mealTotals = mealEntries.reduce((acc, e) => {
+        acc.kcal += e.kcal; acc.protein += e.protein; acc.carbs += e.carbs; acc.fat += e.fat;
+        return acc;
+      }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
 
       const section = document.createElement("div");
       section.className = "meal-section";
@@ -139,7 +142,7 @@
       header.innerHTML = `
         <div class="meal-header-left">
           <span class="meal-name">${meal.label}</span>
-          <span class="meal-kcal">${mealEntries.length ? Math.round(kcal) + " kcal" : ""}</span>
+          <span class="meal-kcal">${mealEntries.length ? `${Math.round(mealTotals.kcal)} kcal · P${Math.round(mealTotals.protein)} C${Math.round(mealTotals.carbs)} G${Math.round(mealTotals.fat)}` : ""}</span>
         </div>
         <button class="meal-add-btn" aria-label="Agregar a ${meal.label}">+</button>
       `;
