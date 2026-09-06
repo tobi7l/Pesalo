@@ -1,4 +1,4 @@
-const CACHE_NAME = "pesalo-v3";
+const CACHE_NAME = "pesalo-v4";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -39,10 +39,12 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.method !== "GET") return;
 
-  // Red primero para el shell de la app: asi cada visita con internet trae la
-  // ultima version publicada. El cache solo se usa como respaldo sin conexion.
+  // Red primero para el shell de la app, ignorando el cache HTTP del navegador
+  // (GitHub Pages manda max-age=600 en los assets, asi que un fetch normal podia
+  // devolver una copia vieja del disco sin salir a internet). El cache del SW
+  // solo se usa como respaldo sin conexion.
   event.respondWith(
-    fetch(event.request).then((response) => {
+    fetch(event.request, { cache: "no-store" }).then((response) => {
       if (response && response.ok) {
         const clone = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));

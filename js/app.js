@@ -41,7 +41,6 @@
       $("resultsList").innerHTML = "";
       $("commonTitle").hidden = true;
       $("searchStatus").hidden = true;
-      $("searchHint").hidden = false;
       setTimeout(() => $("searchInput").focus(), 200);
     }
     if (name === "ajustes") loadSettingsIntoForm();
@@ -193,13 +192,11 @@
     const q = e.target.value;
     clearTimeout(state.searchDebounce);
     if (!q.trim()) {
-      $("searchHint").hidden = false;
       $("commonTitle").hidden = true;
       $("searchStatus").hidden = true;
       $("resultsList").innerHTML = "";
       return;
     }
-    $("searchHint").hidden = true;
     $("searchStatus").hidden = false;
     $("searchStatus").textContent = "Buscando...";
     state.searchDebounce = setTimeout(async () => {
@@ -424,7 +421,7 @@
   // ---------- Service worker ----------
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch(() => {});
     });
   }
 
