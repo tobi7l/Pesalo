@@ -444,8 +444,10 @@
   ["sliderProtein", "sliderCarbs", "sliderFat", "goalKcal"].forEach(id => {
     $(id).addEventListener("input", refreshMacroUi);
   });
+  // "change" (no "input"): que recalcule recien al salir del campo, no en cada
+  // tecla, porque si no la reescritura en vivo peleaba contra lo que se tipeaba.
   ["gramsProtein", "gramsCarbs", "gramsFat"].forEach(id => {
-    $(id).addEventListener("input", onMacroGramsInput);
+    $(id).addEventListener("change", onMacroGramsInput);
   });
 
   $("saveSettingsBtn").addEventListener("click", () => {
