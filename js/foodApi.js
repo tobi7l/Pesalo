@@ -151,6 +151,26 @@ const FoodApi = (() => {
         crudo:  { kcal: 260, protein: 17, carbs: 0, fat: 21 },
         cocido: { kcal: 330, protein: 23, carbs: 0, fat: 26 }
     }},
+    { name: "Cuadril de cerdo", variants: {
+        crudo:  { kcal: 145, protein: 21, carbs: 0, fat: 6 },
+        cocido: { kcal: 205, protein: 27, carbs: 0, fat: 9 }
+    }},
+    { name: "Nalga de cerdo", variants: {
+        crudo:  { kcal: 139, protein: 21, carbs: 0, fat: 5.5 },
+        cocido: { kcal: 195, protein: 27, carbs: 0, fat: 8 }
+    }},
+    { name: "Cuadrada de cerdo", variants: {
+        crudo:  { kcal: 140, protein: 21, carbs: 0, fat: 5.5 },
+        cocido: { kcal: 200, protein: 27, carbs: 0, fat: 8 }
+    }},
+    { name: "Vacio de cerdo", variants: {
+        crudo:  { kcal: 250, protein: 15, carbs: 0, fat: 21 },
+        cocido: { kcal: 330, protein: 20, carbs: 0, fat: 27 }
+    }},
+    { name: "Solomillo de cerdo", variants: {
+        crudo:  { kcal: 120, protein: 22, carbs: 0, fat: 3 },
+        cocido: { kcal: 175, protein: 28, carbs: 0, fat: 5 }
+    }},
 
     // Mas cortes de pollo
     { name: "Muslo de pollo", variants: {
