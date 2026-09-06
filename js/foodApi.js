@@ -234,14 +234,23 @@ const FoodApi = (() => {
     }).filter(f => f.kcal > 0 || f.protein > 0 || f.carbs > 0 || f.fat > 0);
   }
 
-  async function search(query, apiKey) {
-    const local = searchCommon(query);
-    if (!query.trim()) {
+  // extraFoods: alimentos guardados por el usuario (manuales o ya usados antes),
+  // en formato {name, kcal, protein, carbs, fat}. Tienen prioridad sobre la lista
+  // comun porque son datos reales que el usuario cargo (ej. de una etiqueta).
+  async function search(query, apiKey, extraFoods) {
+    const q = query.trim().toLowerCase();
+    const extra = (extraFoods || []).filter(f => f.name.toLowerCase().includes(q));
+    const common = searchCommon(query).filter(
+      f => !extra.some(e => e.name.toLowerCase() === f.name.toLowerCase())
+    );
+    const local = [...extra, ...common];
+
+    if (!q) {
       return { results: local, source: "common", error: null };
     }
-    // Si ya tenemos el alimento en la lista local (cortes, comidas caseras, etc.)
-    // no consultamos USDA: evita mezclar resultados en ingles que no aplican
-    // (ej. "paleta" trayendo paletas de helado en vez del corte de carne).
+    // Si ya tenemos el alimento guardado o en la lista local (cortes, comidas
+    // caseras, etc.) no consultamos USDA: evita mezclar resultados en ingles
+    // que no aplican (ej. "paleta" trayendo paletas de helado en vez del corte).
     if (local.length > 0) {
       return { results: local, source: "common", error: null };
     }

@@ -200,7 +200,7 @@
     $("searchStatus").hidden = false;
     $("searchStatus").textContent = "Buscando...";
     state.searchDebounce = setTimeout(async () => {
-      const { results, source, error } = await FoodApi.search(q, Storage.getApiKey());
+      const { results, source, error } = await FoodApi.search(q, Storage.getApiKey(), Storage.getRecent());
       $("commonTitle").hidden = false;
       $("commonTitle").textContent = "Resultados";
       if (error) {
