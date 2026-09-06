@@ -1,17 +1,17 @@
 :root {
-  --bg: #0b1220;
-  --card: #141c2e;
-  --card-2: #1b2540;
-  --text: #f1f5f9;
-  --text-dim: #94a3b8;
-  --border: #24304a;
-  --green: #10b981;
-  --blue: #3b82f6;
-  --orange: #f59e0b;
+  --bg: #08090b;
+  --card: #121317;
+  --card-2: #1a1c21;
+  --text: #f2f2f0;
+  --text-dim: #888d94;
+  --border: #26292f;
+  --green: #22c55e;
+  --green-deep: #16a34a;
+  --amber: #f59e0b;
   --red: #ef4444;
-  --protein: #3b82f6;
+  --protein: #ef4444;
   --carbs: #f59e0b;
-  --fat: #ec4899;
+  --fat: #22c55e;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
@@ -24,7 +24,7 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  font-family: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
   overscroll-behavior-y: none;
 }
 
@@ -58,10 +58,10 @@ html, body {
 .date-label { font-size: 17px; font-weight: 700; }
 .icon-btn {
   background: var(--card);
-  border: none;
+  border: 1px solid var(--border);
   color: var(--text);
   width: 34px; height: 34px;
-  border-radius: 50%;
+  border-radius: 8px;
   font-size: 18px;
   display: flex; align-items: center; justify-content: center;
 }
@@ -71,7 +71,7 @@ html, body {
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 12px;
   padding: 18px;
   margin-bottom: 16px;
 }
@@ -119,8 +119,8 @@ html, body {
 .meal-name { font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
 .meal-kcal { font-size: 12px; color: var(--text-dim); }
 .meal-add-btn {
-  background: var(--card); border: 1px solid var(--border); color: var(--green);
-  width: 28px; height: 28px; border-radius: 50%; font-size: 17px;
+  background: var(--card-2); border: 1px solid var(--border); color: var(--green);
+  width: 28px; height: 28px; border-radius: 8px; font-size: 17px;
   display: flex; align-items: center; justify-content: center;
 }
 
@@ -130,15 +130,15 @@ html, body {
 
 .meal-pills { display: flex; gap: 8px; margin: 16px 0 4px; }
 .meal-pill {
-  flex: 1; padding: 10px 4px; border-radius: 12px; border: 1px solid var(--border);
+  flex: 1; padding: 10px 4px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--card-2); color: var(--text-dim); font-size: 12px; font-weight: 600;
 }
-.meal-pill.active { background: var(--green); color: #06251c; border-color: var(--green); }
+.meal-pill.active { background: var(--green-deep); color: #fff; border-color: var(--green-deep); }
 
 .food-item {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 12px 14px;
   display: flex; align-items: center; gap: 12px;
 }
@@ -155,13 +155,13 @@ html, body {
   right: calc(50% - 240px + 20px);
   bottom: calc(88px + var(--safe-bottom));
   width: 58px; height: 58px;
-  border-radius: 50%;
-  background: var(--green);
-  color: #06251c;
+  border-radius: 14px;
+  background: var(--green-deep);
+  color: #fff;
   font-size: 30px;
   font-weight: 400;
   border: none;
-  box-shadow: 0 6px 18px rgba(16,185,129,.4);
+  box-shadow: 0 6px 18px rgba(22,163,74,.35);
   display: flex; align-items: center; justify-content: center;
   z-index: 20;
 }
@@ -172,7 +172,7 @@ html, body {
 .search-input {
   width: 100%;
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--text);
@@ -187,29 +187,31 @@ html, body {
 .result-item {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 12px 14px;
   display: flex; align-items: center; gap: 12px;
 }
 .result-main { flex: 1; min-width: 0; }
 .result-name { font-size: 15px; font-weight: 600; }
 .result-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
-.result-add { background: var(--green); color: #06251c; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; flex-shrink: 0; }
+.result-add { background: var(--green-deep); color: #fff; border: none; width: 30px; height: 30px; border-radius: 8px; font-size: 18px; flex-shrink: 0; }
 
 .link-btn {
   background: none; border: none; color: var(--green); font-size: 14px; font-weight: 600; padding: 14px 4px; width: 100%; text-align: center;
 }
 
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  position: fixed; inset: 0; background: rgba(0,0,0,.65);
   display: flex; align-items: flex-end; justify-content: center;
   z-index: 50;
 }
 .modal-overlay[hidden] { display: none; }
 .modal-sheet {
   background: var(--card);
+  border: 1px solid var(--border);
+  border-bottom: none;
   width: 100%; max-width: 480px;
-  border-radius: 22px 22px 0 0;
+  border-radius: 16px 16px 0 0;
   padding: 10px 20px calc(24px + var(--safe-bottom));
 }
 .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 3px; margin: 4px auto 14px; }
@@ -219,27 +221,27 @@ html, body {
 .portion-input-row { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
 .portion-input-row input {
   flex: 1; font-size: 22px; font-weight: 700; padding: 12px 14px;
-  border-radius: 12px; border: 1px solid var(--border); background: var(--card-2); color: var(--text);
+  border-radius: 10px; border: 1px solid var(--border); background: var(--card-2); color: var(--text);
 }
 .portion-input-row span { color: var(--text-dim); }
 
 .portion-preview { display: flex; gap: 10px; margin-bottom: 20px; }
-.pp-item { flex: 1; background: var(--card-2); border-radius: 12px; padding: 10px; text-align: center; }
+.pp-item { flex: 1; background: var(--card-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
 .pp-item span { display: block; font-size: 17px; font-weight: 700; }
 .pp-item small { color: var(--text-dim); font-size: 11px; }
 
 .modal-actions { display: flex; gap: 10px; }
 .btn-primary, .btn-secondary, .btn-danger {
-  flex: 1; padding: 14px; border-radius: 14px; border: none; font-size: 15px; font-weight: 700;
+  flex: 1; padding: 14px; border-radius: 10px; border: none; font-size: 15px; font-weight: 700;
 }
-.btn-primary { background: var(--green); color: #06251c; }
-.btn-secondary { background: var(--card-2); color: var(--text); }
+.btn-primary { background: var(--green-deep); color: #fff; }
+.btn-secondary { background: var(--card-2); border: 1px solid var(--border); color: var(--text); }
 .btn-danger { background: rgba(239,68,68,.12); color: var(--red); width: 100%; }
 
 .field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text-dim); margin-bottom: 12px; }
 .field:last-child { margin-bottom: 0; }
 .field input {
-  padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--card-2); color: var(--text); font-size: 15px;
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-2); color: var(--text); font-size: 15px;
 }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 10px; }
 
@@ -261,7 +263,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
   position: fixed;
   bottom: 0; left: 0; right: 0;
   max-width: 480px; margin: 0 auto;
-  background: rgba(20,28,46,.92);
+  background: rgba(18,19,23,.94);
   backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
   display: flex;
@@ -277,7 +279,7 @@ input[type="range"] { width: 100%; accent-color: var(--green); }
 
 .toast {
   position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 50%; transform: translateX(-50%);
-  background: #1e293b; color: var(--text); padding: 10px 18px; border-radius: 30px; font-size: 13px;
-  z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 18px; border-radius: 10px; font-size: 13px;
+  z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,.4);
 }
 .toast[hidden] { display: none; }
