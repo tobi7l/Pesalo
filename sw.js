@@ -1,4 +1,4 @@
-const CACHE_NAME = "pesalo-v2";
+const CACHE_NAME = "pesalo-v3";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -39,16 +39,15 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.method !== "GET") return;
 
+  // Red primero para el shell de la app: asi cada visita con internet trae la
+  // ultima version publicada. El cache solo se usa como respaldo sin conexion.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request).then((response) => {
-        if (response && response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request).then((response) => {
+      if (response && response.ok) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+      }
+      return response;
+    }).catch(() => caches.match(event.request))
   );
 });
