@@ -19,7 +19,8 @@
     settings: Storage.getSettings(),
     pendingFood: null,   // alimento seleccionado esperando confirmar porcion
     pendingMeal: "desayuno", // comida elegida dentro del modal de porcion
-    selectedMeal: null   // comida preseleccionada al entrar a Buscar
+    selectedMeal: null,  // comida preseleccionada al entrar a Buscar
+    pendingBarcode: null // codigo de barras escaneado esperando carga manual
   };
 
   const $ = (id) => document.getElementById(id);
@@ -300,7 +301,9 @@
     };
     const dateKey = Storage.todayKey(state.currentDate);
     Storage.addEntry(dateKey, entry);
-    Storage.addRecent({ name: displayName, kcal: source.kcal, protein: source.protein, carbs: source.carbs, fat: source.fat });
+    const recentFood = { name: displayName, kcal: source.kcal, protein: source.protein, carbs: source.carbs, fat: source.fat };
+    if (f.barcode) recentFood.barcode = f.barcode;
+    Storage.addRecent(recentFood);
     $("portionModal").hidden = true;
     state.pendingFood = null;
     showToast("Agregado a " + fmtDateLabel(state.currentDate));
@@ -309,11 +312,17 @@
   });
 
   // ---------- Alimento manual ----------
-  $("manualAddBtn").addEventListener("click", () => {
+  function openManualModal(hint) {
     ["manName", "manKcal", "manProtein", "manCarbs", "manFat"].forEach(id => $(id).value = "");
+    $("manualHint").textContent = hint || "Valores por cada 100 g del alimento";
     $("manualModal").hidden = false;
+  }
+
+  $("manualAddBtn").addEventListener("click", () => {
+    state.pendingBarcode = null;
+    openManualModal();
   });
-  $("manualCancel").addEventListener("click", () => { $("manualModal").hidden = true; });
+  $("manualCancel").addEventListener("click", () => { $("manualModal").hidden = true; state.pendingBarcode = null; });
 
   $("manualNext").addEventListener("click", () => {
     const name = $("manName").value.trim();
@@ -323,8 +332,55 @@
     const fat = parseFloat($("manFat").value) || 0;
     if (!name) { $("manName").focus(); return; }
     $("manualModal").hidden = true;
-    openPortionModal({ name, kcal, protein, carbs, fat, source: "manual" });
+    const food = { name, kcal, protein, carbs, fat, source: "manual" };
+    if (state.pendingBarcode) {
+      food.barcode = state.pendingBarcode;
+      state.pendingBarcode = null;
+    }
+    openPortionModal(food);
   });
+
+  // ---------- Escaner de codigo de barras ----------
+  $("scanBtn").addEventListener("click", () => {
+    $("scannerModal").hidden = false;
+    $("scannerStatus").textContent = "Apunta la camara al codigo de barras";
+    Barcode.start("scannerVideo", onBarcodeDetected, onScannerError);
+  });
+
+  $("scannerClose").addEventListener("click", closeScanner);
+
+  function closeScanner() {
+    Barcode.stop();
+    $("scannerModal").hidden = true;
+  }
+
+  function onScannerError() {
+    $("scannerStatus").textContent = "No se pudo acceder a la camara. Revisa los permisos.";
+  }
+
+  async function onBarcodeDetected(code) {
+    closeScanner();
+
+    const saved = Storage.findByBarcode(code);
+    if (saved) {
+      openPortionModal(saved);
+      return;
+    }
+
+    showToast("Buscando producto...");
+    try {
+      const product = await Barcode.lookup(code);
+      if (product) {
+        openPortionModal(product);
+      } else {
+        state.pendingBarcode = code;
+        openManualModal("No lo encontramos online. Cargalo con los datos de la etiqueta (por 100 g) y lo vamos a recordar para la proxima.");
+      }
+    } catch (err) {
+      state.pendingBarcode = code;
+      openManualModal("Sin conexion para buscar el producto. Cargalo con los datos de la etiqueta (por 100 g) y lo vamos a recordar para la proxima.");
+    }
+  }
 
   // ---------- Toast ----------
   let toastTimer = null;

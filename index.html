@@ -70,7 +70,10 @@
     </header>
 
     <div class="content">
-      <input type="search" id="searchInput" class="search-input" placeholder="Buscar alimento (ej: arroz, pollo, banana)" autocomplete="off" autocapitalize="none">
+      <div class="search-row">
+        <input type="search" id="searchInput" class="search-input" placeholder="Buscar alimento (ej: arroz, pollo, banana)" autocomplete="off" autocapitalize="none">
+        <button id="scanBtn" class="icon-btn scan-btn" aria-label="Escanear codigo de barras">&#128247;</button>
+      </div>
 
       <div class="section-title" id="commonTitle" hidden>Resultados</div>
       <div id="resultsList" class="results-list"></div>
@@ -78,6 +81,19 @@
       <button id="manualAddBtn" class="link-btn">+ Cargar alimento manualmente</button>
     </div>
   </section>
+
+  <!-- ===== ESCANER DE CODIGO DE BARRAS ===== -->
+  <div id="scannerModal" class="scanner-overlay" hidden>
+    <div class="scanner-topbar">
+      <span>Escanear codigo de barras</span>
+      <button id="scannerClose" class="icon-btn" aria-label="Cerrar">&#10005;</button>
+    </div>
+    <div class="scanner-video-wrap">
+      <video id="scannerVideo" playsinline muted></video>
+      <div class="scanner-frame"></div>
+    </div>
+    <div id="scannerStatus" class="scanner-hint">Apunta la camara al codigo de barras</div>
+  </div>
 
   <!-- ===== DETALLE DE PORCION (modal) ===== -->
   <div id="portionModal" class="modal-overlay" hidden>
@@ -116,7 +132,7 @@
     <div class="modal-sheet">
       <div class="modal-handle"></div>
       <h3>Alimento manual</h3>
-      <p class="modal-hint">Valores por cada 100 g del alimento</p>
+      <p class="modal-hint" id="manualHint">Valores por cada 100 g del alimento</p>
       <label class="field"><span>Nombre</span><input type="text" id="manName" placeholder="Ej: Milanesa casera"></label>
       <div class="field-grid">
         <label class="field"><span>Kcal /100g</span><input type="number" id="manKcal" inputmode="decimal"></label>
@@ -189,8 +205,10 @@
 
 <div id="toast" class="toast" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/foodApi.js"></script>
+<script src="js/barcode.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

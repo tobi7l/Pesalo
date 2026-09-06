@@ -75,6 +75,11 @@ const Storage = (() => {
     localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
   }
 
+  function findByBarcode(barcode) {
+    if (!barcode) return null;
+    return getRecent().find(f => f.barcode === barcode) || null;
+  }
+
   function clearAll() {
     const toRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -87,7 +92,7 @@ const Storage = (() => {
   return {
     todayKey, getSettings, saveSettings,
     getLog, saveLog, addEntry, removeEntry,
-    getRecent, addRecent,
+    getRecent, addRecent, findByBarcode,
     clearAll
   };
 })();

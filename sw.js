@@ -1,4 +1,4 @@
-const CACHE_NAME = "pesalo-v5";
+const CACHE_NAME = "pesalo-v6";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const SHELL_FILES = [
   "./css/style.css",
   "./js/storage.js",
   "./js/foodApi.js",
+  "./js/barcode.js",
   "./js/app.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
