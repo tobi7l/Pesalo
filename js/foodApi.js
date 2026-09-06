@@ -1,15 +1,8 @@
-// Busqueda de alimentos: USDA FoodData Central + lista local de alimentos comunes (fallback / uso rapido).
+// Busqueda de alimentos: base de datos local propia (sin API externa).
 const FoodApi = (() => {
-  const NUTRIENT_NUMBERS = {
-    kcal: "208",
-    protein: "203",
-    fat: "204",
-    carbs: "205"
-  };
-
-  // Valores tipicos por 100 g. Sirve como respaldo offline y para busquedas rapidas de uso diario.
-  // Los alimentos cuyo valor nutricional cambia mucho al cocinarse tienen variants {crudo, cocido};
-  // el resto tiene un unico valor (base) porque no aplica esa distincion.
+  // Valores por 100 g. Los alimentos cuyo valor nutricional cambia mucho al
+  // cocinarse tienen variants {crudo, cocido}; el resto tiene un unico valor
+  // (base) porque no aplica esa distincion.
   const COMMON_FOODS = [
     { name: "Arroz blanco", variants: {
         crudo:  { kcal: 365, protein: 7.1, carbs: 80, fat: 0.7 },
@@ -202,64 +195,16 @@ const FoodApi = (() => {
     return COMMON_FOODS.filter(f => f.name.toLowerCase().includes(q)).map(toSearchResult);
   }
 
-  function extractNutrient(foodNutrients, number) {
-    if (!Array.isArray(foodNutrients)) return 0;
-    const found = foodNutrients.find(n => String(n.nutrientNumber) === number);
-    return found && typeof found.value === "number" ? found.value : 0;
-  }
-
-  async function searchUsda(query, apiKey) {
-    const key = apiKey || "DEMO_KEY";
-    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=20&dataType=Foundation,SR%20Legacy,Branded&api_key=${encodeURIComponent(key)}`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      if (res.status === 403) throw new Error("API key invalida");
-      if (res.status === 429) throw new Error("Limite de consultas alcanzado, proba de nuevo mas tarde");
-      throw new Error("Error consultando USDA (" + res.status + ")");
-    }
-    const data = await res.json();
-    const foods = Array.isArray(data.foods) ? data.foods : [];
-    return foods.map(f => {
-      const kcal = extractNutrient(f.foodNutrients, NUTRIENT_NUMBERS.kcal);
-      const protein = extractNutrient(f.foodNutrients, NUTRIENT_NUMBERS.protein);
-      const carbs = extractNutrient(f.foodNutrients, NUTRIENT_NUMBERS.carbs);
-      const fat = extractNutrient(f.foodNutrients, NUTRIENT_NUMBERS.fat);
-      const brand = f.brandName || f.brandOwner || "";
-      return {
-        name: f.description ? (brand ? `${f.description} (${brand})` : f.description) : "Alimento",
-        kcal, protein, carbs, fat,
-        source: "usda",
-        fdcId: f.fdcId
-      };
-    }).filter(f => f.kcal > 0 || f.protein > 0 || f.carbs > 0 || f.fat > 0);
-  }
-
   // extraFoods: alimentos guardados por el usuario (manuales o ya usados antes),
   // en formato {name, kcal, protein, carbs, fat}. Tienen prioridad sobre la lista
   // comun porque son datos reales que el usuario cargo (ej. de una etiqueta).
-  async function search(query, apiKey, extraFoods) {
+  function search(query, extraFoods) {
     const q = query.trim().toLowerCase();
     const extra = (extraFoods || []).filter(f => f.name.toLowerCase().includes(q));
     const common = searchCommon(query).filter(
       f => !extra.some(e => e.name.toLowerCase() === f.name.toLowerCase())
     );
-    const local = [...extra, ...common];
-
-    if (!q) {
-      return { results: local, source: "common", error: null };
-    }
-    // Si ya tenemos el alimento guardado o en la lista local (cortes, comidas
-    // caseras, etc.) no consultamos USDA: evita mezclar resultados en ingles
-    // que no aplican (ej. "paleta" trayendo paletas de helado en vez del corte).
-    if (local.length > 0) {
-      return { results: local, source: "common", error: null };
-    }
-    try {
-      const usdaResults = await searchUsda(query, apiKey);
-      return { results: usdaResults, source: "usda", error: null };
-    } catch (err) {
-      return { results: local, source: "common", error: err.message };
-    }
+    return { results: [...extra, ...common] };
   }
 
   return { search, searchCommon, COMMON_FOODS };

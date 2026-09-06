@@ -183,7 +183,6 @@ html, body {
 }
 .search-input::placeholder { color: var(--text-dim); }
 
-.search-status { font-size: 13px; color: var(--text-dim); padding: 8px 4px; }
 
 .results-list { display: flex; flex-direction: column; gap: 8px; }
 .result-item {

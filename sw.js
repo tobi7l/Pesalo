@@ -1,4 +1,4 @@
-const CACHE_NAME = "pesalo-v4";
+const CACHE_NAME = "pesalo-v5";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -27,16 +27,6 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-
-  // Nunca cachear llamadas a la API de USDA: siempre queremos datos frescos.
-  if (url.hostname.includes("api.nal.usda.gov")) {
-    event.respondWith(fetch(event.request).catch(() => new Response(JSON.stringify({ foods: [] }), {
-      headers: { "Content-Type": "application/json" }
-    })));
-    return;
-  }
-
   if (event.request.method !== "GET") return;
 
   // Red primero para el shell de la app, ignorando el cache HTTP del navegador

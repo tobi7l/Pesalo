@@ -19,9 +19,7 @@
     settings: Storage.getSettings(),
     pendingFood: null,   // alimento seleccionado esperando confirmar porcion
     pendingMeal: "desayuno", // comida elegida dentro del modal de porcion
-    selectedMeal: null,  // comida preseleccionada al entrar a Buscar
-    manualDraft: null,   // datos de alimento manual antes de pedir porcion
-    searchDebounce: null
+    selectedMeal: null   // comida preseleccionada al entrar a Buscar
   };
 
   const $ = (id) => document.getElementById(id);
@@ -40,7 +38,6 @@
       $("searchInput").value = "";
       $("resultsList").innerHTML = "";
       $("commonTitle").hidden = true;
-      $("searchStatus").hidden = true;
       setTimeout(() => $("searchInput").focus(), 200);
     }
     if (name === "ajustes") loadSettingsIntoForm();
@@ -190,27 +187,15 @@
   // ---------- Busqueda ----------
   $("searchInput").addEventListener("input", (e) => {
     const q = e.target.value;
-    clearTimeout(state.searchDebounce);
     if (!q.trim()) {
       $("commonTitle").hidden = true;
-      $("searchStatus").hidden = true;
       $("resultsList").innerHTML = "";
       return;
     }
-    $("searchStatus").hidden = false;
-    $("searchStatus").textContent = "Buscando...";
-    state.searchDebounce = setTimeout(async () => {
-      const { results, source, error } = await FoodApi.search(q, Storage.getApiKey(), Storage.getRecent());
-      $("commonTitle").hidden = false;
-      $("commonTitle").textContent = "Resultados";
-      if (error) {
-        $("searchStatus").hidden = false;
-        $("searchStatus").textContent = "No se pudo consultar USDA (" + error + "). Mostrando alimentos locales.";
-      } else {
-        $("searchStatus").hidden = true;
-      }
-      renderResults(results, source);
-    }, 400);
+    const { results } = FoodApi.search(q, Storage.getRecent());
+    $("commonTitle").hidden = false;
+    $("commonTitle").textContent = "Resultados";
+    renderResults(results);
   });
 
   function renderResults(foods, source) {
@@ -358,7 +343,6 @@
     $("sliderProtein").value = s.macroPct.protein;
     $("sliderCarbs").value = s.macroPct.carbs;
     $("sliderFat").value = s.macroPct.fat;
-    $("apiKeyInput").value = Storage.getApiKey() === "DEMO_KEY" ? "" : Storage.getApiKey();
     updateSlidersUi();
   }
 
@@ -403,14 +387,13 @@
       }
     };
     Storage.saveSettings(state.settings);
-    Storage.setApiKey($("apiKeyInput").value);
     showToast("Ajustes guardados");
     showScreen("hoy");
     renderToday();
   });
 
   $("clearDataBtn").addEventListener("click", () => {
-    if (confirm("Esto borra todo lo cargado (comidas, ajustes, API key) en este dispositivo. Continuar?")) {
+    if (confirm("Esto borra todo lo cargado (comidas y ajustes) en este dispositivo. Continuar?")) {
       Storage.clearAll();
       state.settings = Storage.getSettings();
       renderToday();

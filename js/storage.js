@@ -3,7 +3,6 @@ const Storage = (() => {
   const SETTINGS_KEY = "pesalo_settings_v1";
   const LOG_PREFIX = "pesalo_log_";
   const RECENT_KEY = "pesalo_recent_v1";
-  const APIKEY_KEY = "pesalo_apikey_v1";
 
   const DEFAULT_SETTINGS = {
     goalKcal: 2000,
@@ -68,18 +67,12 @@ const Storage = (() => {
   }
 
   function addRecent(food) {
+    // Esto funciona como la base de datos propia del usuario: cada alimento
+    // manual o ya usado queda guardado (sin limite chico) para futuras busquedas.
     let recent = getRecent().filter(f => f.name.toLowerCase() !== food.name.toLowerCase());
     recent.unshift(food);
-    recent = recent.slice(0, 20);
+    recent = recent.slice(0, 300);
     localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
-  }
-
-  function getApiKey() {
-    return localStorage.getItem(APIKEY_KEY) || "DEMO_KEY";
-  }
-
-  function setApiKey(key) {
-    localStorage.setItem(APIKEY_KEY, key && key.trim() ? key.trim() : "DEMO_KEY");
   }
 
   function clearAll() {
@@ -95,7 +88,6 @@ const Storage = (() => {
     todayKey, getSettings, saveSettings,
     getLog, saveLog, addEntry, removeEntry,
     getRecent, addRecent,
-    getApiKey, setApiKey,
     clearAll
   };
 })();
