@@ -393,37 +393,59 @@
   }
 
   // ---------- Ajustes ----------
+  const CAL_PER_GRAM = { Protein: 4, Carbs: 4, Fat: 9 };
+
   function loadSettingsIntoForm() {
     const s = state.settings;
     $("goalKcal").value = s.goalKcal;
     $("sliderProtein").value = s.macroPct.protein;
     $("sliderCarbs").value = s.macroPct.carbs;
     $("sliderFat").value = s.macroPct.fat;
-    updateSlidersUi();
+    refreshMacroUi();
   }
 
-  function updateSlidersUi() {
-    const p = parseInt($("sliderProtein").value, 10);
-    const c = parseInt($("sliderCarbs").value, 10);
-    const f = parseInt($("sliderFat").value, 10);
-    $("pctProtein").textContent = p + "%";
-    $("pctCarbs").textContent = c + "%";
-    $("pctFat").textContent = f + "%";
-    const sum = p + c + f;
-    $("sumHint").textContent = "Suma: " + sum + "%" + (sum === 100 ? "" : " (se va a normalizar a 100%)");
-
+  // Recalcula %, gramos y el hint de suma a partir de los sliders + la meta de kcal.
+  function refreshMacroUi() {
     const goal = parseFloat($("goalKcal").value) || 0;
-    const norm = sum > 0 ? 100 / sum : 1;
-    const pn = p * norm, cn = c * norm, fn = f * norm;
-    $("macroGramsPreview").innerHTML = `
-      <div><b>${Math.round(goal * pn / 100 / 4)}g</b>proteina</div>
-      <div><b>${Math.round(goal * cn / 100 / 4)}g</b>carbs</div>
-      <div><b>${Math.round(goal * fn / 100 / 9)}g</b>grasa</div>
-    `;
+    const pct = {
+      Protein: parseInt($("sliderProtein").value, 10),
+      Carbs: parseInt($("sliderCarbs").value, 10),
+      Fat: parseInt($("sliderFat").value, 10)
+    };
+    ["Protein", "Carbs", "Fat"].forEach(key => {
+      $("pct" + key).textContent = pct[key] + "%";
+      $("grams" + key).value = Math.round(goal * pct[key] / 100 / CAL_PER_GRAM[key]);
+    });
+    const sum = pct.Protein + pct.Carbs + pct.Fat;
+    $("sumHint").textContent = "Suma: " + sum + "%" + (sum === 100 ? "" : " (se va a normalizar a 100%)");
+  }
+
+  // Si el usuario tipea gramos, se recalculan las kcal totales y los % de cada macro.
+  function onMacroGramsInput() {
+    const grams = {
+      Protein: parseFloat($("gramsProtein").value) || 0,
+      Carbs: parseFloat($("gramsCarbs").value) || 0,
+      Fat: parseFloat($("gramsFat").value) || 0
+    };
+    const kcalTotal = grams.Protein * CAL_PER_GRAM.Protein + grams.Carbs * CAL_PER_GRAM.Carbs + grams.Fat * CAL_PER_GRAM.Fat;
+    $("goalKcal").value = Math.round(kcalTotal);
+
+    ["Protein", "Carbs", "Fat"].forEach(key => {
+      const rawPct = kcalTotal > 0 ? (grams[key] * CAL_PER_GRAM[key] * 100 / kcalTotal) : 0;
+      const slider = $("slider" + key);
+      const min = parseInt(slider.min, 10);
+      const max = parseInt(slider.max, 10);
+      slider.value = Math.max(min, Math.min(max, Math.round(rawPct)));
+    });
+
+    refreshMacroUi();
   }
 
   ["sliderProtein", "sliderCarbs", "sliderFat", "goalKcal"].forEach(id => {
-    $(id).addEventListener("input", updateSlidersUi);
+    $(id).addEventListener("input", refreshMacroUi);
+  });
+  ["gramsProtein", "gramsCarbs", "gramsFat"].forEach(id => {
+    $(id).addEventListener("input", onMacroGramsInput);
   });
 
   $("saveSettingsBtn").addEventListener("click", () => {

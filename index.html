@@ -162,21 +162,39 @@
       </div>
 
       <div class="section-title">Distribucion de macros</div>
+      <p class="modal-hint" style="margin:-4px 2px 12px;">Ajusta por porcentaje con el slider, o escribi los gramos directo.</p>
       <div class="card">
         <div class="slider-row">
-          <div class="slider-head"><span class="dot protein"></span> Proteinas <b id="pctProtein">30%</b></div>
+          <div class="slider-head">
+            <span class="dot protein"></span> Proteinas
+            <span class="slider-head-right">
+              <input type="number" id="gramsProtein" class="grams-input" inputmode="numeric"><span class="grams-unit">g</span>
+              <b id="pctProtein">30%</b>
+            </span>
+          </div>
           <input type="range" id="sliderProtein" min="5" max="70" value="30">
         </div>
         <div class="slider-row">
-          <div class="slider-head"><span class="dot carbs"></span> Carbohidratos <b id="pctCarbs">40%</b></div>
+          <div class="slider-head">
+            <span class="dot carbs"></span> Carbohidratos
+            <span class="slider-head-right">
+              <input type="number" id="gramsCarbs" class="grams-input" inputmode="numeric"><span class="grams-unit">g</span>
+              <b id="pctCarbs">40%</b>
+            </span>
+          </div>
           <input type="range" id="sliderCarbs" min="5" max="70" value="40">
         </div>
         <div class="slider-row">
-          <div class="slider-head"><span class="dot fat"></span> Grasas <b id="pctFat">30%</b></div>
+          <div class="slider-head">
+            <span class="dot fat"></span> Grasas
+            <span class="slider-head-right">
+              <input type="number" id="gramsFat" class="grams-input" inputmode="numeric"><span class="grams-unit">g</span>
+              <b id="pctFat">30%</b>
+            </span>
+          </div>
           <input type="range" id="sliderFat" min="5" max="70" value="30">
         </div>
         <div class="sum-hint" id="sumHint">Suma: 100%</div>
-        <div class="macro-grams-preview" id="macroGramsPreview"></div>
       </div>
 
       <div class="section-title">Datos</div>

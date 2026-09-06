@@ -277,7 +277,12 @@ html, body {
 .slider-row { margin-bottom: 16px; }
 .slider-row:last-of-type { margin-bottom: 8px; }
 .slider-head { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 8px; }
-.slider-head b { margin-left: auto; }
+.slider-head-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.grams-input {
+  width: 54px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card-2); color: var(--text); font-size: 13px; text-align: right;
+}
+.grams-unit { color: var(--text-dim); font-size: 12px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot.protein { background: var(--protein); }
 .dot.carbs { background: var(--carbs); }
@@ -285,8 +290,6 @@ html, body {
 input[type="range"] { width: 100%; accent-color: var(--green); }
 
 .sum-hint { text-align: center; font-size: 12px; color: var(--text-dim); margin-top: 4px; }
-.macro-grams-preview { display: flex; justify-content: space-around; margin-top: 14px; font-size: 12px; color: var(--text-dim); }
-.macro-grams-preview b { color: var(--text); display: block; font-size: 14px; }
 
 .tabbar {
   position: fixed;
