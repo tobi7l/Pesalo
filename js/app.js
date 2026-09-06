@@ -1,8 +1,25 @@
 (() => {
+  const MEALS = [
+    { key: "desayuno", label: "Desayuno" },
+    { key: "almuerzo", label: "Almuerzo" },
+    { key: "merienda", label: "Merienda" },
+    { key: "cena", label: "Cena" }
+  ];
+
+  function guessMealByTime(date) {
+    const h = (date || new Date()).getHours();
+    if (h >= 5 && h < 11) return "desayuno";
+    if (h >= 11 && h < 16) return "almuerzo";
+    if (h >= 16 && h < 20) return "merienda";
+    return "cena";
+  }
+
   let state = {
     currentDate: new Date(),
     settings: Storage.getSettings(),
     pendingFood: null,   // alimento seleccionado esperando confirmar porcion
+    pendingMeal: "desayuno", // comida elegida dentro del modal de porcion
+    selectedMeal: null,  // comida preseleccionada al entrar a Buscar
     manualDraft: null,   // datos de alimento manual antes de pedir porcion
     searchDebounce: null
   };
@@ -10,13 +27,16 @@
   const $ = (id) => document.getElementById(id);
 
   // ---------- Navegacion entre pantallas ----------
-  function showScreen(name) {
+  function showScreen(name, meal) {
     document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
     $("screen-" + name).classList.add("active");
     document.querySelectorAll(".tab-btn").forEach(b => {
       b.classList.toggle("active", b.dataset.screen === name);
     });
     if (name === "buscar") {
+      state.selectedMeal = meal || guessMealByTime();
+      const mealLabel = MEALS.find(m => m.key === state.selectedMeal).label;
+      $("buscarTitle").textContent = "Agregar a " + mealLabel;
       $("searchInput").value = "";
       renderResults(FoodApi.searchCommon(""), "common");
       $("commonTitle").textContent = "Alimentos frecuentes";
@@ -91,7 +111,7 @@
     setBar("Carbs", totals.carbs, targets.carbsG);
     setBar("Fat", totals.fat, targets.fatG);
 
-    renderFoodList(entries, dateKey);
+    renderMeals(entries, dateKey);
   }
 
   function setBar(key, value, target) {
@@ -100,29 +120,61 @@
     $("txt" + key).textContent = `${Math.round(value)} / ${target} g`;
   }
 
-  function renderFoodList(entries, dateKey) {
-    const list = $("foodList");
-    if (!entries.length) {
-      list.innerHTML = '<div class="empty-state" id="emptyState">Todavia no cargaste nada. Toca + para agregar una comida.</div>';
-      return;
-    }
-    list.innerHTML = "";
-    entries.slice().reverse().forEach(entry => {
-      const div = document.createElement("div");
-      div.className = "food-item";
-      div.innerHTML = `
-        <div class="food-item-main">
-          <div class="food-item-name">${escapeHtml(entry.name)}</div>
-          <div class="food-item-sub">${entry.grams} g · P ${Math.round(entry.protein)} · C ${Math.round(entry.carbs)} · G ${Math.round(entry.fat)}</div>
+  function mealOf(entry) {
+    return entry.meal || guessMealByTime(new Date(entry.time));
+  }
+
+  function renderMeals(entries, dateKey) {
+    const container = $("mealsContainer");
+    container.innerHTML = "";
+    MEALS.forEach(meal => {
+      const mealEntries = entries.filter(e => mealOf(e) === meal.key);
+      const kcal = mealEntries.reduce((sum, e) => sum + e.kcal, 0);
+
+      const section = document.createElement("div");
+      section.className = "meal-section";
+
+      const header = document.createElement("div");
+      header.className = "meal-header";
+      header.innerHTML = `
+        <div class="meal-header-left">
+          <span class="meal-name">${meal.label}</span>
+          <span class="meal-kcal">${mealEntries.length ? Math.round(kcal) + " kcal" : ""}</span>
         </div>
-        <div class="food-item-kcal">${Math.round(entry.kcal)}</div>
-        <button class="food-item-del" data-id="${entry.id}" aria-label="Eliminar">&#128465;</button>
+        <button class="meal-add-btn" aria-label="Agregar a ${meal.label}">+</button>
       `;
-      div.querySelector(".food-item-del").addEventListener("click", () => {
-        Storage.removeEntry(dateKey, entry.id);
-        renderToday();
-      });
-      list.appendChild(div);
+      header.querySelector(".meal-add-btn").addEventListener("click", () => showScreen("buscar", meal.key));
+      section.appendChild(header);
+
+      if (!mealEntries.length) {
+        const empty = document.createElement("div");
+        empty.className = "meal-empty";
+        empty.textContent = "Sin registros";
+        section.appendChild(empty);
+      } else {
+        const list = document.createElement("div");
+        list.className = "food-list";
+        mealEntries.slice().reverse().forEach(entry => {
+          const div = document.createElement("div");
+          div.className = "food-item";
+          div.innerHTML = `
+            <div class="food-item-main">
+              <div class="food-item-name">${escapeHtml(entry.name)}</div>
+              <div class="food-item-sub">${entry.grams} g · P ${Math.round(entry.protein)} · C ${Math.round(entry.carbs)} · G ${Math.round(entry.fat)}</div>
+            </div>
+            <div class="food-item-kcal">${Math.round(entry.kcal)}</div>
+            <button class="food-item-del" data-id="${entry.id}" aria-label="Eliminar">&#128465;</button>
+          `;
+          div.querySelector(".food-item-del").addEventListener("click", () => {
+            Storage.removeEntry(dateKey, entry.id);
+            renderToday();
+          });
+          list.appendChild(div);
+        });
+        section.appendChild(list);
+      }
+
+      container.appendChild(section);
     });
   }
 
@@ -180,10 +232,22 @@
   }
 
   // ---------- Modal de porcion ----------
+  function setPendingMeal(mealKey) {
+    state.pendingMeal = mealKey;
+    document.querySelectorAll("#portionMealPills .meal-pill").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.meal === mealKey);
+    });
+  }
+
+  document.querySelectorAll("#portionMealPills .meal-pill").forEach(btn => {
+    btn.addEventListener("click", () => setPendingMeal(btn.dataset.meal));
+  });
+
   function openPortionModal(food) {
     state.pendingFood = food;
     $("portionFoodName").textContent = food.name;
     $("portionGrams").value = 100;
+    setPendingMeal(state.selectedMeal || guessMealByTime());
     updatePortionPreview();
     $("portionModal").hidden = false;
   }
@@ -215,6 +279,7 @@
       protein: f.protein * factor,
       carbs: f.carbs * factor,
       fat: f.fat * factor,
+      meal: state.pendingMeal,
       time: new Date().toISOString()
     };
     const dateKey = Storage.todayKey(state.currentDate);

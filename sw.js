@@ -1,4 +1,4 @@
-const CACHE_NAME = "pesalo-v1";
+const CACHE_NAME = "pesalo-v2";
 const SHELL_FILES = [
   "./",
   "./index.html",

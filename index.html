@@ -63,10 +63,7 @@
         </div>
       </div>
 
-      <div class="section-title">Comidas de hoy</div>
-      <div id="foodList" class="food-list">
-        <div class="empty-state" id="emptyState">Todavia no cargaste nada. Toca + para agregar una comida.</div>
-      </div>
+      <div id="mealsContainer"></div>
     </div>
 
     <button id="fabAdd" class="fab" aria-label="Agregar comida">+</button>
@@ -76,7 +73,7 @@
   <section id="screen-buscar" class="screen">
     <header class="topbar">
       <button id="closeBuscar" class="icon-btn" aria-label="Cerrar">&#10005;</button>
-      <div class="date-label">Agregar comida</div>
+      <div class="date-label" id="buscarTitle">Agregar comida</div>
       <div style="width:32px"></div>
     </header>
 
@@ -97,6 +94,12 @@
     <div class="modal-sheet">
       <div class="modal-handle"></div>
       <h3 id="portionFoodName">Alimento</h3>
+      <div class="meal-pills" id="portionMealPills">
+        <button type="button" class="meal-pill" data-meal="desayuno">Desayuno</button>
+        <button type="button" class="meal-pill" data-meal="almuerzo">Almuerzo</button>
+        <button type="button" class="meal-pill" data-meal="merienda">Merienda</button>
+        <button type="button" class="meal-pill" data-meal="cena">Cena</button>
+      </div>
       <div class="portion-input-row">
         <input type="number" id="portionGrams" value="100" min="0" step="1" inputmode="decimal">
         <span>gramos</span>
