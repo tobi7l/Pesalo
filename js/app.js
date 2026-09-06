@@ -404,66 +404,61 @@
     refreshMacroUi();
   }
 
-  // Recalcula %, gramos y el hint de suma a partir de los sliders + la meta de kcal.
-  function refreshMacroUi() {
+  // Cada macro es independiente: tocar una no mueve las otras. La suma de %
+  // puede dar cualquier cosa (menos o mas de 100%) y no se corrige sola.
+  function refreshOneMacro(key) {
     const goal = parseFloat($("goalKcal").value) || 0;
-    const pct = {
-      Protein: parseInt($("sliderProtein").value, 10),
-      Carbs: parseInt($("sliderCarbs").value, 10),
-      Fat: parseInt($("sliderFat").value, 10)
-    };
-    ["Protein", "Carbs", "Fat"].forEach(key => {
-      $("pct" + key).textContent = pct[key] + "%";
-      $("grams" + key).value = Math.round(goal * pct[key] / 100 / CAL_PER_GRAM[key]);
-    });
-    const sum = pct.Protein + pct.Carbs + pct.Fat;
-    $("sumHint").textContent = "Suma: " + sum + "%" + (sum === 100 ? "" : " (se va a normalizar a 100%)");
+    const pct = parseInt($("slider" + key).value, 10);
+    $("pct" + key).textContent = pct + "%";
+    $("grams" + key).value = Math.round(goal * pct / 100 / CAL_PER_GRAM[key]);
   }
 
-  // Si el usuario tipea gramos, se recalculan las kcal totales y los % de cada macro.
-  function onMacroGramsInput() {
-    const grams = {
-      Protein: parseFloat($("gramsProtein").value) || 0,
-      Carbs: parseFloat($("gramsCarbs").value) || 0,
-      Fat: parseFloat($("gramsFat").value) || 0
-    };
-    const kcalTotal = grams.Protein * CAL_PER_GRAM.Protein + grams.Carbs * CAL_PER_GRAM.Carbs + grams.Fat * CAL_PER_GRAM.Fat;
-    $("goalKcal").value = Math.round(kcalTotal);
+  function updateSumHint() {
+    const sum = ["Protein", "Carbs", "Fat"].reduce((acc, key) => acc + parseInt($("slider" + key).value, 10), 0);
+    $("sumHint").textContent = "Suma: " + sum + "%";
+  }
 
-    ["Protein", "Carbs", "Fat"].forEach(key => {
-      const rawPct = kcalTotal > 0 ? (grams[key] * CAL_PER_GRAM[key] * 100 / kcalTotal) : 0;
+  function refreshMacroUi() {
+    ["Protein", "Carbs", "Fat"].forEach(refreshOneMacro);
+    updateSumHint();
+  }
+
+  // Mover un slider solo actualiza esa macro.
+  ["Protein", "Carbs", "Fat"].forEach(key => {
+    $("slider" + key).addEventListener("input", () => {
+      refreshOneMacro(key);
+      updateSumHint();
+    });
+  });
+
+  // Cambiar la meta de calorias recalcula los gramos de las 3 (mismo % de cada una,
+  // nueva base), pero no toca los porcentajes que el usuario eligio.
+  $("goalKcal").addEventListener("input", refreshMacroUi);
+
+  // Tipear gramos (al salir del campo) solo recalcula el % de ESA macro.
+  ["Protein", "Carbs", "Fat"].forEach(key => {
+    $("grams" + key).addEventListener("change", () => {
+      const goal = parseFloat($("goalKcal").value) || 0;
+      const grams = parseFloat($("grams" + key).value) || 0;
+      const pct = goal > 0 ? Math.round(grams * CAL_PER_GRAM[key] * 100 / goal) : 0;
       const slider = $("slider" + key);
       const min = parseInt(slider.min, 10);
       const max = parseInt(slider.max, 10);
-      slider.value = Math.max(min, Math.min(max, Math.round(rawPct)));
+      slider.value = Math.max(min, Math.min(max, pct));
+      $("pct" + key).textContent = slider.value + "%";
+      updateSumHint();
     });
-
-    refreshMacroUi();
-  }
-
-  ["sliderProtein", "sliderCarbs", "sliderFat", "goalKcal"].forEach(id => {
-    $(id).addEventListener("input", refreshMacroUi);
-  });
-  // "change" (no "input"): que recalcule recien al salir del campo, no en cada
-  // tecla, porque si no la reescritura en vivo peleaba contra lo que se tipeaba.
-  ["gramsProtein", "gramsCarbs", "gramsFat"].forEach(id => {
-    $(id).addEventListener("change", onMacroGramsInput);
   });
 
   $("saveSettingsBtn").addEventListener("click", () => {
-    const p = parseInt($("sliderProtein").value, 10);
-    const c = parseInt($("sliderCarbs").value, 10);
-    const f = parseInt($("sliderFat").value, 10);
-    const sum = p + c + f || 1;
-    const norm = 100 / sum;
     const goalKcal = Math.max(0, parseInt($("goalKcal").value, 10) || 2000);
 
     state.settings = {
       goalKcal,
       macroPct: {
-        protein: Math.round(p * norm),
-        carbs: Math.round(c * norm),
-        fat: Math.round(f * norm)
+        protein: parseInt($("sliderProtein").value, 10),
+        carbs: parseInt($("sliderCarbs").value, 10),
+        fat: parseInt($("sliderFat").value, 10)
       }
     };
     Storage.saveSettings(state.settings);
