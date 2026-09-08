@@ -14,7 +14,9 @@ const FoodApi = (() => {
     }},
     { name: "Huevo entero", base: { kcal: 155, protein: 13, carbs: 1.1, fat: 11 }, unitGrams: 50 },
     { name: "Banana", base: { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 }, unitGrams: 120 },
-    { name: "Manzana", base: { kcal: 52, protein: 0.3, carbs: 14, fat: 0.2 }, unitGrams: 180 },
+    { name: "Manzana roja", base: { kcal: 58, protein: 0.3, carbs: 15.2, fat: 0.2 }, unitGrams: 180 },
+    { name: "Manzana verde", base: { kcal: 55, protein: 0.3, carbs: 13.8, fat: 0.2 }, unitGrams: 180 },
+    { name: "Frutilla", base: { kcal: 32, protein: 0.7, carbs: 7.7, fat: 0.3 }, unitGrams: 12 },
     { name: "Pan lactal blanco", base: { kcal: 265, protein: 9, carbs: 49, fat: 3.2 } },
     { name: "Fideos", variants: {
         crudo:  { kcal: 371, protein: 13, carbs: 74, fat: 1.5 },
