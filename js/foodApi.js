@@ -138,6 +138,10 @@ const FoodApi = (() => {
         crudo:  { kcal: 150, protein: 21, carbs: 0, fat: 7 },
         cocido: { kcal: 210, protein: 27, carbs: 0, fat: 10 }
     }},
+    { name: "Chuleta de cerdo", variants: {
+        crudo:  { kcal: 150, protein: 21, carbs: 0, fat: 7 },
+        cocido: { kcal: 210, protein: 27, carbs: 0, fat: 10 }
+    }},
     { name: "Matambre de cerdo", variants: {
         crudo:  { kcal: 200, protein: 18, carbs: 0, fat: 14 },
         cocido: { kcal: 270, protein: 24, carbs: 0, fat: 18 }
