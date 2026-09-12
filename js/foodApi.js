@@ -68,7 +68,7 @@ const FoodApi = (() => {
     { name: "Jamon cocido", base: { kcal: 145, protein: 21, carbs: 1.5, fat: 6 } },
 
     // Cortes de carne vacuna
-    { name: "Asado (costillar)", variants: {
+    { name: "Asado (costillar)", boneFraction: 0.28, variants: {
         crudo:  { kcal: 250, protein: 17, carbs: 0, fat: 20 },
         cocido: { kcal: 330, protein: 25, carbs: 0, fat: 25 }
     }},
@@ -120,7 +120,7 @@ const FoodApi = (() => {
         crudo:  { kcal: 140, protein: 21, carbs: 0, fat: 6 },
         cocido: { kcal: 200, protein: 28, carbs: 0, fat: 9 }
     }},
-    { name: "Osobuco", variants: {
+    { name: "Osobuco", boneFraction: 0.30, variants: {
         crudo:  { kcal: 130, protein: 20, carbs: 0, fat: 5 },
         cocido: { kcal: 190, protein: 27, carbs: 0, fat: 8 }
     }},
@@ -138,7 +138,7 @@ const FoodApi = (() => {
         crudo:  { kcal: 150, protein: 21, carbs: 0, fat: 7 },
         cocido: { kcal: 210, protein: 27, carbs: 0, fat: 10 }
     }},
-    { name: "Chuleta de cerdo", variants: {
+    { name: "Chuleta de cerdo", boneFraction: 0.15, variants: {
         crudo:  { kcal: 150, protein: 21, carbs: 0, fat: 7 },
         cocido: { kcal: 210, protein: 27, carbs: 0, fat: 10 }
     }},
@@ -146,7 +146,7 @@ const FoodApi = (() => {
         crudo:  { kcal: 200, protein: 18, carbs: 0, fat: 14 },
         cocido: { kcal: 270, protein: 24, carbs: 0, fat: 18 }
     }},
-    { name: "Costillar de cerdo", variants: {
+    { name: "Costillar de cerdo", boneFraction: 0.30, variants: {
         crudo:  { kcal: 260, protein: 17, carbs: 0, fat: 21 },
         cocido: { kcal: 330, protein: 23, carbs: 0, fat: 26 }
     }},
@@ -192,6 +192,7 @@ const FoodApi = (() => {
       fat: defaults.fat,
       variants: food.variants || null,
       unitGrams: food.unitGrams || null,
+      boneFraction: food.boneFraction || null,
       source: "common"
     };
   }

@@ -245,10 +245,34 @@
     btn.addEventListener("click", () => setPendingVariant(btn.dataset.variant));
   });
 
+  function setPendingBone(bone) {
+    state.pendingBone = bone;
+    document.querySelectorAll("#portionBonePills .meal-pill").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.bone === bone);
+    });
+    updatePortionPreview();
+  }
+
+  document.querySelectorAll("#portionBonePills .meal-pill").forEach(btn => {
+    btn.addEventListener("click", () => setPendingBone(btn.dataset.bone));
+  });
+
+  // Si el corte se peso con hueso, el hueso no aporta nutrientes: se descuenta
+  // su fraccion de peso para no sobreestimar kcal/macros sobre el total pesado.
   function currentFoodMacros() {
     const f = state.pendingFood;
     if (!f) return null;
-    return f.variants ? f.variants[state.pendingVariant] : f;
+    const macros = f.variants ? f.variants[state.pendingVariant] : f;
+    if (f.boneFraction && state.pendingBone === "con") {
+      const factor = 1 - f.boneFraction;
+      return {
+        kcal: macros.kcal * factor,
+        protein: macros.protein * factor,
+        carbs: macros.carbs * factor,
+        fat: macros.fat * factor
+      };
+    }
+    return macros;
   }
 
   function openPortionModal(food) {
@@ -271,8 +295,17 @@
     } else {
       $("portionVariantPills").hidden = true;
       state.pendingVariant = null;
+    }
+
+    if (food.boneFraction) {
+      $("portionBonePills").hidden = false;
+      setPendingBone("con");
+    } else {
+      $("portionBonePills").hidden = true;
+      state.pendingBone = null;
       updatePortionPreview();
     }
+
     setPendingMeal(state.selectedMeal || guessMealByTime());
     $("portionModal").hidden = false;
   }
@@ -315,7 +348,10 @@
     const source = currentFoodMacros();
     if (!f || !source || grams <= 0) return;
     const factor = grams / 100;
-    const displayName = f.variants ? `${f.name} (${state.pendingVariant})` : f.name;
+    const qualifiers = [];
+    if (f.variants) qualifiers.push(state.pendingVariant);
+    if (f.boneFraction) qualifiers.push(state.pendingBone === "con" ? "con hueso" : "sin hueso");
+    const displayName = qualifiers.length ? `${f.name} (${qualifiers.join(", ")})` : f.name;
     const entry = {
       id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
       name: displayName,
