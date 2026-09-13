@@ -31,6 +31,7 @@ const FoodApi = (() => {
         cocido: { kcal: 90, protein: 2, carbs: 21, fat: 0.1 }
     }},
     { name: "Atun al natural", base: { kcal: 116, protein: 26, carbs: 0, fat: 1 } },
+    { name: "Pizza muzzarella con provolone", base: { kcal: 275, protein: 12, carbs: 30, fat: 12 }, unitGrams: 150 },
     { name: "Yogur natural entero", base: { kcal: 61, protein: 3.5, carbs: 4.7, fat: 3.3 } },
     { name: "Leche descremada", base: { kcal: 35, protein: 3.4, carbs: 5, fat: 0.1 } },
     { name: "Palta", base: { kcal: 160, protein: 2, carbs: 8.5, fat: 14.7 }, unitGrams: 150 },
