@@ -278,13 +278,6 @@
     ];
   }
 
-  function bezTangent(u) {
-    return [
-      2 * (1 - u) * (BZ[1][0] - BZ[0][0]) + 2 * u * (BZ[2][0] - BZ[1][0]),
-      2 * (1 - u) * (BZ[1][1] - BZ[0][1]) + 2 * u * (BZ[2][1] - BZ[1][1])
-    ];
-  }
-
   const BZ_TABLE = (() => {
     const table = [{ u: 0, len: 0 }];
     let prev = bezPoint(0);
@@ -300,52 +293,19 @@
   })();
   const BZ_LEN = BZ_TABLE[BZ_TABLE.length - 1].len;
 
-  // Parametro u de la curva a una fraccion (0..1) de su largo.
-  function uAtFraction(f) {
-    const target = Math.max(0, Math.min(1, f)) * BZ_LEN;
-    let i = 1;
-    while (i < BZ_TABLE.length - 1 && BZ_TABLE[i].len < target) i++;
-    const a = BZ_TABLE[i - 1], b = BZ_TABLE[i];
-    return a.u + (b.u - a.u) * ((target - a.len) / ((b.len - a.len) || 1));
-  }
-
-  const TICK_LO = 0.37;
-  const TICK_HI = 0.62;
-
-  // El arco marca el rango objetivo (meta -10% / +10%) en el centro.
-  function gaugeFraction(v, goal) {
-    if (goal <= 0) return 0;
-    const lo = goal * 0.9, hi = goal * 1.1;
-    if (v <= lo) return TICK_LO * (v / lo);
-    if (v <= hi) return TICK_LO + (TICK_HI - TICK_LO) * ((v - lo) / (hi - lo));
-    return TICK_HI + (1 - TICK_HI) * Math.min(1, (v - hi) / (goal * 0.4));
-  }
-
+  // El arco se llena de forma lineal: llegar a la meta lo completa.
+  // Amarillo hasta el 90% de la meta, verde entre el 90% y el 110%, rojo si se pasa.
   function renderGauge(eaten, goal) {
     const fill = $("gaugeFill");
-    const lo = goal * 0.9, hi = goal * 1.1;
-    fill.style.strokeDasharray = `${(gaugeFraction(eaten, goal) * BZ_LEN).toFixed(2)} ${BZ_LEN.toFixed(2)}`;
+    const fraction = goal > 0 ? Math.min(1, eaten / goal) : 0;
+    fill.style.strokeDasharray = `${(fraction * BZ_LEN).toFixed(2)} ${BZ_LEN.toFixed(2)}`;
     fill.style.opacity = eaten > 0 ? 1 : 0;
-    fill.style.stroke = eaten > hi ? "var(--red)" : "var(--accent)";
+    fill.style.stroke = eaten > goal * 1.1 ? "var(--red)" : eaten >= goal * 0.9 ? "var(--green)" : "var(--accent)";
 
-    const ticks = $("gaugeTicks");
+    $("gaugeTicks").innerHTML = "";
     const labels = $("gaugeLabels");
-    ticks.innerHTML = "";
     labels.innerHTML = "";
-    [[TICK_LO, lo], [TICK_HI, hi]].forEach(([f, value]) => {
-      const u = uAtFraction(f);
-      const [x, y] = bezPoint(u);
-      const [tx, ty] = bezTangent(u);
-      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      rect.setAttribute("class", "gauge-tick");
-      rect.setAttribute("x", "-1.5");
-      rect.setAttribute("y", "-8");
-      rect.setAttribute("width", "3");
-      rect.setAttribute("height", "16");
-      rect.setAttribute("rx", "1.5");
-      rect.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${(Math.atan2(ty, tx) * 180 / Math.PI).toFixed(2)})`);
-      ticks.appendChild(rect);
-
+    [[BZ[0][0], 0], [BZ[2][0], goal]].forEach(([x, value]) => {
       const label = document.createElement("span");
       label.className = "gauge-label";
       label.style.left = (x / 300 * 100) + "%";
