@@ -144,7 +144,7 @@ const Storage = (() => {
     if (!barcode) return null;
     const pools = [getCreated(), getRecents().map(r => r.food), getFavs()];
     for (const pool of pools) {
-      const hit = pool.find(f => f.barcode === barcode);
+      const hit = pool.find(f => f.barcode === barcode || (f.barcodes || []).includes(barcode));
       if (hit) return hit;
     }
     return null;

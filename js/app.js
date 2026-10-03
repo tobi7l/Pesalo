@@ -14,7 +14,9 @@
 
   const SVG_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 7h15M9.500 7V4.800h5V7M6.500 7l.8 12.200h9.400L17.500 7M10 11v5.500M14 11v5.500"/></svg>';
 
+  const PLATE = "\uD83C\uDF7D\uFE0F";
   const $ = (id) => document.getElementById(id);
+  const iconOf = (icon, name) => (icon && icon !== PLATE ? icon : FoodApi.iconFor(name));
   const mealLabel = (key) => MEALS.find(m => m.key === key).label;
   const fmtInt = (n) => Math.round(n).toLocaleString("es-AR");
   const fmtG = (n) => Number(n).toLocaleString("es-AR", { maximumFractionDigits: n < 10 ? 1 : 0 });
@@ -41,7 +43,8 @@
     showAllRecents: false,
     sheet: null,          // alimento abierto en la hoja de detalle
     pendingBarcode: null, // codigo escaneado esperando carga manual
-    mealPreview: null     // comida reciente abierta en el modal
+    mealPreview: null,    // comida reciente abierta en el modal
+    linkBarcode: null     // codigo escaneado que se va a vincular a un alimento
   };
 
   // ---------- Fechas ----------
@@ -154,7 +157,7 @@
     const calc = FoodApi.compute(food, sel);
     return {
       name: food.name,
-      icon: food.icon,
+      icon: iconOf(food.icon, food.name),
       qualifiers: FoodApi.qualifiersOf(food, sel),
       grams: calc.grams,
       qty: sel.qty,
@@ -179,11 +182,11 @@
   // Datos para mostrar una entrada (nueva o del esquema viejo).
   function entryView(e) {
     if (e.food) {
-      return { name: e.name, icon: e.icon || e.food.icon, quals: e.qualifiers || [], label: e.label };
+      return { name: e.name, icon: iconOf(e.icon || e.food.icon, e.name), quals: e.qualifiers || [], label: e.label };
     }
     const { base, quals } = parseLegacyName(e.name);
     const { food, sel } = resolveLegacyEntry(e);
-    return { name: base, icon: food.icon, quals, label: FoodApi.qtyLabel(food, sel) };
+    return { name: base, icon: iconOf(food.icon, base), quals, label: FoodApi.qtyLabel(food, sel) };
   }
 
   // ---------- Navegacion ----------
@@ -195,6 +198,7 @@
     window.scrollTo(0, 0);
 
     if (name === "buscar") {
+      clearLink();
       state.selectedMeal = meal || guessMealByTime();
       $("buscarTitle").textContent = "Agregar a " + mealLabel(state.selectedMeal);
       $("searchInput").value = "";
@@ -510,7 +514,7 @@
     btn.type = "button";
     btn.className = "food-row";
     btn.innerHTML =
-      `<span class="fr-icon">${food.icon}</span>` +
+      `<span class="fr-icon">${iconOf(food.icon, food.name)}</span>` +
       `<span class="fr-main"><span class="fr-name">${esc(food.name)}</span><span class="fr-sub">${esc(food.subtitle)}</span></span>` +
       `<span class="fr-right"><span class="fr-qty">${esc(FoodApi.qtyLabel(food, sel))}</span><span class="fr-kcal">${Math.round(calc.kcal)} kcal</span></span>`;
     btn.addEventListener("click", onClick);
@@ -740,8 +744,9 @@
       meal: meal || state.selectedMeal || guessMealByTime()
     };
 
-    $("sheetHero").style.setProperty("--tint", FoodApi.tintFor(food.icon));
-    $("sheetIcon").textContent = food.icon;
+    const icon = iconOf(food.icon, food.name);
+    $("sheetHero").style.setProperty("--tint", FoodApi.tintFor(icon));
+    $("sheetIcon").textContent = icon;
     $("sheetName").textContent = food.name;
     $("sheetSub").textContent = food.subtitle;
     $("sheetDelete").hidden = mode !== "edit";
@@ -861,6 +866,11 @@
   $("sheetAdd").addEventListener("click", () => {
     const s = state.sheet;
     if (FoodApi.gramsOf(s.food, s.sel) <= 0) { showToast("Ingresá una cantidad"); return; }
+    if (state.linkBarcode && s.mode === "add") {
+      s.food = withBarcode(s.food, state.linkBarcode);
+      clearLink();
+      showToast("Código vinculado: la próxima vez se reconoce solo");
+    }
     const data = buildEntryData(s.food, s.sel, s.meal);
 
     if (s.mode === "edit") {
@@ -869,7 +879,7 @@
     } else {
       Storage.addEntry(dateKey(state.currentDate), newEntry(data));
       Storage.pushRecent({ food: s.food, sel: { ...s.sel }, label: data.label, kcal: data.kcal, ts: new Date().toISOString() });
-      showToast("Agregado a " + mealLabel(s.meal));
+      if (!$("toast").textContent.startsWith("Código")) showToast("Agregado a " + mealLabel(s.meal));
     }
     closeSheet();
     showScreen("hoy");
@@ -963,14 +973,54 @@
       if (product) {
         openFood(FoodApi.makeCustomFood({ ...product, source: "barcode" }));
       } else {
-        state.pendingBarcode = code;
-        openManualModal("No lo encontramos online. Cargalo con los datos de la etiqueta (por 100 g) y lo vamos a recordar para la proxima.");
+        openNotFound(code, "No está en la base de productos ni en Open Food Facts.");
       }
     } catch (err) {
-      state.pendingBarcode = code;
-      openManualModal("Sin conexion para buscar el producto. Cargalo con los datos de la etiqueta (por 100 g) y lo vamos a recordar para la proxima.");
+      openNotFound(code, "No hay conexión para buscarlo online.");
     }
   }
+
+  // ---------- Producto no encontrado: vincular el codigo o cargarlo ----------
+  function withBarcode(food, code) {
+    const prev = Storage.getRecents().find(r => r.food.name.toLowerCase() === food.name.toLowerCase());
+    const codes = new Set([...(food.barcodes || []), ...((prev && prev.food.barcodes) || [])]);
+    [food.barcode, prev && prev.food.barcode, code].forEach(c => { if (c) codes.add(c); });
+    return { ...food, barcodes: [...codes] };
+  }
+
+  function clearLink() {
+    state.linkBarcode = null;
+    $("linkBanner").hidden = true;
+  }
+
+  function openNotFound(code, reason) {
+    state.pendingBarcode = code;
+    $("notFoundText").textContent = `Código ${code}. ${reason} Podés buscarlo por nombre y lo vinculamos a este código, o cargarlo con los datos de la etiqueta.`;
+    $("notFoundModal").hidden = false;
+  }
+
+  function closeNotFound() { $("notFoundModal").hidden = true; }
+
+  $("nfCancel").addEventListener("click", () => { closeNotFound(); state.pendingBarcode = null; });
+  $("notFoundModal").addEventListener("click", (e) => {
+    if (e.target === $("notFoundModal")) { closeNotFound(); state.pendingBarcode = null; }
+  });
+  $("nfCreate").addEventListener("click", () => {
+    closeNotFound();
+    openManualModal("Cargalo con los datos de la etiqueta (por 100 g) y lo vamos a recordar para la próxima.");
+  });
+  $("nfSearch").addEventListener("click", () => {
+    closeNotFound();
+    state.linkBarcode = state.pendingBarcode;
+    state.pendingBarcode = null;
+    $("linkBannerText").textContent = `Buscá el producto y agregalo: le vinculamos el código ${state.linkBarcode}.`;
+    $("linkBanner").hidden = false;
+    state.searchTab = "db";
+    $("searchInput").value = "";
+    renderSearch();
+    $("searchInput").focus();
+  });
+  $("linkBannerClose").addEventListener("click", clearLink);
 
   // ---------- Toast ----------
   let toastTimer = null;

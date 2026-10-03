@@ -264,6 +264,11 @@ const FoodApi = (() => {
     [/helado/, "🍦"], [/sopa|caldo/, "🥣"], [/empanada/, "🥟"], [/hamburguesa/, "🍔"],
     [/\bcafe\b/, "☕"], [/\bte\b|saquito/, "🍵"], [/cereal|granola|muesli/, "🥣"],
     [/manteca|margarina/, "🧈"], [/salchicha|morcilla|mortadela|salame|fiambre|paleta cocida/, "🌭"],
+    [/queso|rallado|reggianito|sardo|cremoso|port salut|danbo|tybo|provolone|mozzarella|muzzarella|ricota|ricotta/, "🧀"],
+    [/atun|caballa|sardina|jurel|salmon|surimi|anchoa/, "🐟"],
+    [/\bpure de (papa|batata|zapallo)/, "🥔"], [/yogur|yogurisimo|postre|\bflan\b/, "🥛"], [/mayonesa|ketchup|mostaza|aderezo|salsa|aji/, "🥫"],
+    [/mani|nueces|pistacho|castana|semillas|chia|girasol/, "🥜"], [/aceituna/, "🫒"], [/vinagre|aceto/, "🫙"],
+    [/porotos|arvejas|garbanzos/, "🫘"], [/\bsal\b/, "🧂"],
     [/huevo/, "🥚"], [/banana/, "🍌"], [/manzana verde/, "🍏"],
     [/manzana/, "🍎"], [/frutilla/, "🍓"], [/naranja/, "🍊"], [/palta/, "🥑"],
     [/tomate/, "🍅"], [/zanahoria/, "🥕"], [/arroz/, "🍚"], [/fideos/, "🍝"],
@@ -283,7 +288,7 @@ const FoodApi = (() => {
     "🥛": "#262a30", "🐟": "#14283b", "🍖": "#3b1c14", "🍗": "#3b1d10", "🥩": "#3b1616",
     "🍕": "#3b2410", "🍪": "#33291a", "🍫": "#2b1c14", "🥤": "#1f2a33", "🍯": "#3b2a0f",
     "🧉": "#1f3314", "🍟": "#3b3011", "🌭": "#3b1c14", "🍦": "#2f2a33", "🥟": "#33291a",
-    "🍬": "#3b1c2b", "🌾": "#33301a", "🍷": "#33141c", "🍺": "#3b3011", "💧": "#14283b"
+    "🧀": "#3b3211", "🥫": "#3b1612", "🥜": "#33241a", "🫙": "#26301a", "🧂": "#2c2c2e", "🍬": "#3b1c2b", "🌾": "#33301a", "🍷": "#33141c", "🍺": "#3b3011", "💧": "#14283b"
   };
 
   function normalize(s) {

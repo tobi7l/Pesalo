@@ -88,6 +88,11 @@
         <input type="search" id="searchInput" class="search-input" placeholder="Buscar alimentos" autocomplete="off" autocapitalize="none">
       </div>
 
+      <div class="link-banner" id="linkBanner" hidden>
+        <span id="linkBannerText"></span>
+        <button id="linkBannerClose" aria-label="Cancelar vinculo">&#10005;</button>
+      </div>
+
       <div class="tabs" id="searchTabs">
         <button class="tab active" data-tab="db"><svg class="tab-ic-svg" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2C7.6 2 4 3.5 4 5.5v13C4 20.5 7.6 22 12 22s8-1.5 8-3.5v-13C20 3.5 16.4 2 12 2zm0 2c3.7 0 6 1.1 6 1.5S15.7 7 12 7 6 5.9 6 5.5 8.3 4 12 4zm6 14.5c0 .4-2.3 1.5-6 1.5s-6-1.1-6-1.5v-2.2c1.5.9 3.7 1.4 6 1.4s4.5-.5 6-1.4v2.2zm0-4.7c0 .4-2.3 1.5-6 1.5s-6-1.1-6-1.5v-2.2c1.5.9 3.7 1.4 6 1.4s4.5-.5 6-1.4v2.2zm0-4.7c0 .4-2.3 1.5-6 1.5S6 9.5 6 9.1V7c1.5.9 3.7 1.4 6 1.4S16.500 7.900 18 7v2.1z"/></svg><span>Base de Datos</span></button>
         <button class="tab" data-tab="favs"><svg class="tab-ic-svg" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 21s-8-5-9.500-10C1.500 7.500 3.700 5 6.700 5c1.900 0 3.500 1 5.300 3 1.800-2 3.400-3 5.300-3 3 0 5.200 2.500 4.200 6C20 16 12 21 12 21z"/></svg><span>Favoritos</span></button>
@@ -233,6 +238,20 @@
           </label>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== PRODUCTO NO ENCONTRADO ===== -->
+  <div id="notFoundModal" class="modal-overlay" hidden>
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3>No encontramos este producto</h3>
+      <p class="modal-hint" id="notFoundText"></p>
+      <div class="menu-list">
+        <button class="menu-item" id="nfSearch">Buscarlo por nombre y vincular el c&oacute;digo</button>
+        <button class="menu-item" id="nfCreate">Cargarlo con la etiqueta</button>
+      </div>
+      <button class="btn-secondary menu-cancel" id="nfCancel">Cancelar</button>
     </div>
   </div>
 
