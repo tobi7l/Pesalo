@@ -17,154 +17,93 @@
 </head>
 <body>
 
+<div class="status-cover"></div>
+
 <div id="app">
 
-  <!-- ===== HOY ===== -->
+  <!-- ===== PLAN (diario) ===== -->
   <section id="screen-hoy" class="screen active">
-    <header class="topbar">
-      <button id="prevDay" class="icon-btn" aria-label="Dia anterior">&#8249;</button>
-      <div class="date-label" id="dateLabel">Hoy</div>
-      <button id="nextDay" class="icon-btn" aria-label="Dia siguiente">&#8250;</button>
-    </header>
+    <div class="diary-top">
+      <label class="date-btn">
+        <span id="dateLabel">Hoy</span><span class="date-caret">&#9662;</span>
+        <input type="date" id="datePicker" aria-label="Elegir fecha">
+      </label>
+    </div>
+
+    <div class="diary-sticky">
+      <div class="week-strip" id="weekStrip"></div>
+      <div class="mini-summary" id="miniSummary" hidden></div>
+    </div>
 
     <div class="content">
-      <div class="card ring-card">
-        <div class="ring-wrap">
-          <svg viewBox="0 0 140 140" class="ring">
-            <circle cx="70" cy="70" r="62" class="ring-bg"></circle>
-            <circle cx="70" cy="70" r="62" class="ring-fg" id="calRing"></circle>
-          </svg>
-          <div class="ring-center">
-            <div class="ring-kcal"><span id="kcalEatenTxt">0</span><span class="ring-kcal-sep">/</span><span id="kcalGoalTxt">2000</span></div>
-            <div class="ring-sub">kcal</div>
-          </div>
+      <div class="summary-card" id="summaryCard">
+        <div class="sc-top">
+          <button id="editGoalsBtn" class="sc-icon" aria-label="Editar objetivos">&#9998;</button>
+          <button id="kcalTitleBtn" class="sc-title">kcal &#8250;</button>
+          <span class="sc-icon sc-icon-ghost"></span>
         </div>
-        <div class="ring-macros">
-          <div class="rm-block">
-            <div class="rm-top"><span class="dot protein"></span>Proteinas</div>
-            <div class="rm-bottom"><div class="bar-track mini"><div class="bar-fill protein" id="barProtein"></div></div><span class="rm-val" id="txtProtein">0/0g</span></div>
-          </div>
-          <div class="rm-block">
-            <div class="rm-top"><span class="dot carbs"></span>Carbohidratos</div>
-            <div class="rm-bottom"><div class="bar-track mini"><div class="bar-fill carbs" id="barCarbs"></div></div><span class="rm-val" id="txtCarbs">0/0g</span></div>
-          </div>
-          <div class="rm-block">
-            <div class="rm-top"><span class="dot fat"></span>Grasas</div>
-            <div class="rm-bottom"><div class="bar-track mini"><div class="bar-fill fat" id="barFat"></div></div><span class="rm-val" id="txtFat">0/0g</span></div>
-          </div>
+        <div class="sc-big"><span id="kcalEaten">0</span><span class="sc-sep"> / </span><span id="kcalGoal">2.000</span></div>
+        <div class="gauge">
+          <svg viewBox="0 0 300 64" class="gauge-svg" aria-hidden="true">
+            <path class="gauge-track" d="M 10 54 Q 150 6 290 54"/>
+            <path class="gauge-fill" id="gaugeFill" d="M 10 54 Q 150 6 290 54"/>
+            <g id="gaugeTicks"></g>
+          </svg>
+          <div class="gauge-labels" id="gaugeLabels"></div>
+        </div>
+        <div class="sc-macros">
+          <button class="sc-macro" data-go="ajustes">
+            <span class="sc-macro-name">Prote&iacute;nas &#8250;</span>
+            <span class="sc-macro-val" id="mvProtein">0 / 0 g</span>
+            <span class="bar-track"><span class="bar-fill protein" id="mbProtein"></span></span>
+          </button>
+          <button class="sc-macro" data-go="ajustes">
+            <span class="sc-macro-name">Carbs &#8250;</span>
+            <span class="sc-macro-val" id="mvCarbs">0 / 0 g</span>
+            <span class="bar-track"><span class="bar-fill carbs" id="mbCarbs"></span></span>
+          </button>
+          <button class="sc-macro" data-go="ajustes">
+            <span class="sc-macro-name">Grasas &#8250;</span>
+            <span class="sc-macro-val" id="mvFat">0 / 0 g</span>
+            <span class="bar-track"><span class="bar-fill fat" id="mbFat"></span></span>
+          </button>
         </div>
       </div>
 
       <div id="mealsContainer"></div>
     </div>
-
-    <button id="fabAdd" class="fab" aria-label="Agregar comida">+</button>
   </section>
 
-  <!-- ===== BUSCAR / AGREGAR ===== -->
+  <!-- ===== BUSCAR ===== -->
   <section id="screen-buscar" class="screen">
     <header class="topbar">
       <button id="closeBuscar" class="icon-btn" aria-label="Cerrar">&#10005;</button>
       <div class="date-label" id="buscarTitle">Agregar comida</div>
-      <div style="width:32px"></div>
+      <div style="width:34px"></div>
     </header>
 
     <div class="content">
-      <div class="search-row">
-        <input type="search" id="searchInput" class="search-input" placeholder="Buscar alimento (ej: arroz, pollo, banana)" autocomplete="off" autocapitalize="none">
-        <button id="scanBtn" class="icon-btn scan-btn" aria-label="Escanear codigo de barras">&#128247;</button>
+      <div class="search-box">
+        <span class="search-ic">&#128269;</span>
+        <input type="search" id="searchInput" class="search-input" placeholder="Buscar alimentos" autocomplete="off" autocapitalize="none">
       </div>
 
-      <div class="section-title" id="commonTitle" hidden>Resultados</div>
-      <div id="resultsList" class="results-list"></div>
+      <div class="tabs" id="searchTabs">
+        <button class="tab active" data-tab="db">Base de Datos</button>
+        <button class="tab" data-tab="favs">&#9829; Favoritos</button>
+        <button class="tab" data-tab="created">&#9998; Creados</button>
+      </div>
 
-      <button id="manualAddBtn" class="link-btn">+ Cargar alimento manualmente</button>
+      <div id="tabContent"></div>
     </div>
   </section>
-
-  <!-- ===== ESCANER DE CODIGO DE BARRAS ===== -->
-  <div id="scannerModal" class="scanner-overlay" hidden>
-    <div class="scanner-topbar">
-      <span>Escanear codigo de barras</span>
-      <button id="scannerClose" class="icon-btn" aria-label="Cerrar">&#10005;</button>
-    </div>
-    <div class="scanner-video-wrap">
-      <video id="scannerVideo" playsinline muted></video>
-      <div class="scanner-frame"></div>
-    </div>
-    <div id="scannerStatus" class="scanner-hint">Apunta la camara al codigo de barras</div>
-  </div>
-
-  <!-- ===== DETALLE DE PORCION (modal) ===== -->
-  <div id="portionModal" class="modal-overlay" hidden>
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <h3 id="portionFoodName">Alimento</h3>
-      <div class="meal-pills" id="portionVariantPills" hidden>
-        <button type="button" class="meal-pill" data-variant="crudo">Crudo</button>
-        <button type="button" class="meal-pill" data-variant="cocido">Cocido</button>
-      </div>
-      <div class="meal-pills" id="portionBonePills" hidden>
-        <button type="button" class="meal-pill" data-bone="con">Con hueso</button>
-        <button type="button" class="meal-pill" data-bone="sin">Sin hueso</button>
-      </div>
-      <div class="meal-pills" id="portionMealPills">
-        <button type="button" class="meal-pill" data-meal="desayuno">Desayuno</button>
-        <button type="button" class="meal-pill" data-meal="almuerzo">Almuerzo</button>
-        <button type="button" class="meal-pill" data-meal="merienda">Merienda</button>
-        <button type="button" class="meal-pill" data-meal="cena">Cena</button>
-      </div>
-      <div class="unit-row" id="unitRow" hidden>
-        <span class="unit-label" id="unitLabel">Cantidad</span>
-        <div class="stepper">
-          <button type="button" id="unitMinus" class="stepper-btn">&#8722;</button>
-          <input type="number" id="unitQty" class="stepper-input" value="1" min="0" step="1" inputmode="numeric">
-          <button type="button" id="unitPlus" class="stepper-btn">+</button>
-        </div>
-      </div>
-      <div class="portion-input-row">
-        <input type="number" id="portionGrams" value="100" min="0" step="1" inputmode="decimal">
-        <span>gramos</span>
-      </div>
-      <div class="portion-preview">
-        <div class="pp-item"><span id="ppKcal">0</span><small>kcal</small></div>
-        <div class="pp-item"><span id="ppProtein">0</span><small>prot g</small></div>
-        <div class="pp-item"><span id="ppCarbs">0</span><small>carb g</small></div>
-        <div class="pp-item"><span id="ppFat">0</span><small>grasa g</small></div>
-      </div>
-      <div class="modal-actions">
-        <button id="portionCancel" class="btn-secondary">Cancelar</button>
-        <button id="portionConfirm" class="btn-primary">Agregar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== ALIMENTO MANUAL (modal) ===== -->
-  <div id="manualModal" class="modal-overlay" hidden>
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <h3>Alimento manual</h3>
-      <p class="modal-hint" id="manualHint">Valores por cada 100 g del alimento</p>
-      <label class="field"><span>Nombre</span><input type="text" id="manName" placeholder="Ej: Milanesa casera"></label>
-      <div class="field-grid">
-        <label class="field"><span>Kcal /100g</span><input type="number" id="manKcal" inputmode="decimal"></label>
-        <label class="field"><span>Prot /100g</span><input type="number" id="manProtein" inputmode="decimal"></label>
-        <label class="field"><span>Carb /100g</span><input type="number" id="manCarbs" inputmode="decimal"></label>
-        <label class="field"><span>Grasa /100g</span><input type="number" id="manFat" inputmode="decimal"></label>
-      </div>
-      <div class="modal-actions">
-        <button id="manualCancel" class="btn-secondary">Cancelar</button>
-        <button id="manualNext" class="btn-primary">Siguiente</button>
-      </div>
-    </div>
-  </div>
 
   <!-- ===== AJUSTES ===== -->
   <section id="screen-ajustes" class="screen">
     <header class="topbar">
-      <div style="width:32px"></div>
+      <div style="width:34px"></div>
       <div class="date-label">Ajustes</div>
-      <div style="width:32px"></div>
+      <div style="width:34px"></div>
     </header>
 
     <div class="content">
@@ -219,17 +158,114 @@
   </section>
 
   <!-- ===== NAV ===== -->
-  <nav class="tabbar">
+  <nav class="tabbar" id="mainTabbar">
     <button class="tab-btn active" data-screen="hoy">
-      <span class="tab-ic">&#127860;</span><span>Hoy</span>
+      <span class="tab-ic">&#128203;</span><span>Plan</span>
     </button>
     <button class="tab-btn" data-screen="buscar">
-      <span class="tab-ic">&#128269;</span><span>Agregar</span>
+      <span class="tab-ic">&#128269;</span><span>Buscar</span>
     </button>
     <button class="tab-btn" data-screen="ajustes">
       <span class="tab-ic">&#9881;&#65039;</span><span>Ajustes</span>
     </button>
   </nav>
+
+  <nav class="searchbar" id="searchTabbar">
+    <button class="sb-btn active" id="sbSearch"><span class="tab-ic">&#128269;</span><span>Buscar</span></button>
+    <button class="sb-btn" id="sbScan"><span class="tab-ic">&#128247;</span><span>Esc&aacute;ner</span></button>
+  </nav>
+
+  <!-- ===== DETALLE DE ALIMENTO (hoja) ===== -->
+  <div id="foodSheet" class="sheet-overlay" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <div class="sheet-scroll">
+        <div class="sheet-hero" id="sheetHero">
+          <div class="sheet-actions">
+            <button id="sheetDelete" class="round-btn" aria-label="Eliminar" hidden>&#128465;</button>
+            <button id="sheetFav" class="round-btn" aria-label="Favorito">&#9829;</button>
+            <button id="sheetClose" class="round-btn" aria-label="Cerrar">&#10005;</button>
+          </div>
+          <div class="sheet-icon" id="sheetIcon">&#127869;</div>
+        </div>
+
+        <h2 class="sheet-name" id="sheetName">Alimento</h2>
+        <p class="sheet-sub" id="sheetSub">Gen&eacute;rico</p>
+        <p class="sheet-data" id="sheetData"></p>
+
+        <div class="stat-boxes">
+          <div class="stat-box"><div class="stat-val" id="stKcal">0</div><div class="stat-lab">kcal</div></div>
+          <div class="stat-box"><div class="stat-val" id="stProtein">0 g</div><div class="stat-lab">prote&iacute;nas</div></div>
+          <div class="stat-box"><div class="stat-val" id="stCarbs">0 g</div><div class="stat-lab">carbs</div></div>
+          <div class="stat-box"><div class="stat-val" id="stFat">0 g</div><div class="stat-lab">grasas</div></div>
+        </div>
+
+        <div class="dist-bar" id="distBar"></div>
+        <div class="dist-legend" id="distLegend"></div>
+
+        <details class="nutri-details">
+          <summary>Informaci&oacute;n Nutricional</summary>
+          <table class="nutri-table" id="nutriTable"></table>
+        </details>
+      </div>
+
+      <div class="sheet-footer">
+        <div class="sf-fields">
+          <label class="sf-field sf-qty"><span>Cantidad</span><input type="number" id="sheetQty" inputmode="decimal" min="0" step="any"></label>
+          <label class="sf-field sf-portion"><span>Porci&oacute;n</span><select id="sheetPortion"></select></label>
+          <label class="sf-field sf-variant" id="sheetVariantWrap" hidden><span>Tipo de Peso</span>
+            <select id="sheetVariant"><option value="crudo">Crudo</option><option value="cocido">Cocido</option></select>
+          </label>
+          <label class="sf-field sf-bone" id="sheetBoneWrap" hidden><span>Hueso</span>
+            <select id="sheetBone"><option value="con">Con hueso</option><option value="sin">Sin hueso</option></select>
+          </label>
+        </div>
+        <div class="add-split">
+          <button id="sheetAdd" class="add-main">Agregar</button>
+          <label class="add-arrow">&#9662;
+            <select id="sheetMeal" aria-label="Elegir comida">
+              <option value="desayuno">Desayuno</option>
+              <option value="almuerzo">Almuerzo</option>
+              <option value="merienda">Merienda</option>
+              <option value="cena">Cena</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CREAR ALIMENTO (modal) ===== -->
+  <div id="manualModal" class="modal-overlay" hidden>
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3>Crear alimento</h3>
+      <p class="modal-hint" id="manualHint">Valores por cada 100 g del alimento</p>
+      <label class="field"><span>Nombre</span><input type="text" id="manName" placeholder="Ej: Milanesa casera"></label>
+      <div class="field-grid">
+        <label class="field"><span>Kcal /100g</span><input type="number" id="manKcal" inputmode="decimal"></label>
+        <label class="field"><span>Prot /100g</span><input type="number" id="manProtein" inputmode="decimal"></label>
+        <label class="field"><span>Carb /100g</span><input type="number" id="manCarbs" inputmode="decimal"></label>
+        <label class="field"><span>Grasa /100g</span><input type="number" id="manFat" inputmode="decimal"></label>
+      </div>
+      <div class="modal-actions">
+        <button id="manualCancel" class="btn-secondary">Cancelar</button>
+        <button id="manualNext" class="btn-primary">Crear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ESCANER DE CODIGO DE BARRAS ===== -->
+  <div id="scannerModal" class="scanner-overlay" hidden>
+    <div class="scanner-topbar">
+      <span>Escanear codigo de barras</span>
+      <button id="scannerClose" class="icon-btn" aria-label="Cerrar">&#10005;</button>
+    </div>
+    <div class="scanner-video-wrap">
+      <video id="scannerVideo" playsinline muted></video>
+      <div class="scanner-frame"></div>
+    </div>
+    <div id="scannerStatus" class="scanner-hint">Apunta la camara al codigo de barras</div>
+  </div>
 
 </div>
 

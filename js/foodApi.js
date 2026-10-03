@@ -31,7 +31,7 @@ const FoodApi = (() => {
         cocido: { kcal: 90, protein: 2, carbs: 21, fat: 0.1 }
     }},
     { name: "Atun al natural", base: { kcal: 116, protein: 26, carbs: 0, fat: 1 } },
-    { name: "Pizza muzzarella con provolone", base: { kcal: 275, protein: 12, carbs: 30, fat: 12 }, unitGrams: 150 },
+    { name: "Pizza muzzarella con provolone", base: { kcal: 275, protein: 12, carbs: 30, fat: 12 }, unitGrams: 150, unitName: "porción" },
     { name: "Yogur natural entero", base: { kcal: 61, protein: 3.5, carbs: 4.7, fat: 3.3 } },
     { name: "Leche descremada", base: { kcal: 35, protein: 3.4, carbs: 5, fat: 0.1 } },
     { name: "Palta", base: { kcal: 160, protein: 2, carbs: 8.5, fat: 14.7 }, unitGrams: 150 },
@@ -183,38 +183,151 @@ const FoodApi = (() => {
     }}
   ];
 
-  function toSearchResult(food) {
-    const defaults = food.variants ? food.variants.crudo : food.base;
+  // ---------- Modelo de alimento ----------
+  // food = { name, icon, source: "common"|"created"|"barcode", subtitle,
+  //          base | variants {crudo,cocido}, unitGrams, unitName, boneFraction, barcode? }
+  // sel  = { qty, portion: "gramos"|"unidad", variant, bone }
+
+  const ICON_RULES = [
+    [/pizza/, "🍕"], [/huevo/, "🥚"], [/banana/, "🍌"], [/manzana verde/, "🍏"],
+    [/manzana/, "🍎"], [/frutilla/, "🍓"], [/naranja/, "🍊"], [/palta/, "🥑"],
+    [/tomate/, "🍅"], [/zanahoria/, "🥕"], [/arroz/, "🍚"], [/fideos/, "🍝"],
+    [/papa/, "🥔"], [/batata/, "🍠"], [/pan /, "🍞"], [/avena/, "🥣"],
+    [/lentejas|garbanzos/, "🫘"], [/quinoa/, "🌾"], [/almendras/, "🌰"],
+    [/aceite/, "🫒"], [/queso/, "🧀"], [/yogur|leche/, "🥛"],
+    [/atun|merluza/, "🐟"], [/jamon/, "🍖"],
+    [/pollo|pechuga|muslo|alitas/, "🍗"],
+    [/cerdo|osobuco/, "🍖"], [/carne|asado|vacio|matambre|bife|lomo|nalga|cuadrada|peceto|paleta|falda|entra|colita|chuleta/, "🥩"]
+  ];
+
+  const TINTS = {
+    "🥚": "#3b2a12", "🍌": "#3b3411", "🍎": "#3b1418", "🍏": "#1f3314", "🍓": "#3b1420",
+    "🍊": "#3b2410", "🥑": "#1f3314", "🍅": "#3b1612", "🥕": "#3b2410", "🍚": "#2f2c26",
+    "🍝": "#3b3012", "🥔": "#33291a", "🍠": "#3b2216", "🍞": "#3b2a14", "🥣": "#33291a",
+    "🫘": "#33241a", "🌾": "#33301a", "🌰": "#33241a", "🫒": "#26301a", "🧀": "#3b3211",
+    "🥛": "#262a30", "🐟": "#14283b", "🍖": "#3b1c14", "🍗": "#3b1d10", "🥩": "#3b1616",
+    "🍕": "#3b2410"
+  };
+
+  function normalize(s) {
+    return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  }
+
+  function iconFor(name) {
+    const n = normalize(name);
+    const rule = ICON_RULES.find(([re]) => re.test(n));
+    return rule ? rule[1] : "🍽️";
+  }
+
+  function tintFor(icon) {
+    return TINTS[icon] || "#26282d";
+  }
+
+  function toFood(f) {
     return {
-      name: food.name,
-      kcal: defaults.kcal,
-      protein: defaults.protein,
-      carbs: defaults.carbs,
-      fat: defaults.fat,
-      variants: food.variants || null,
-      unitGrams: food.unitGrams || null,
-      boneFraction: food.boneFraction || null,
-      source: "common"
+      name: f.name,
+      icon: iconFor(f.name),
+      source: "common",
+      subtitle: "Genérico",
+      base: f.base || null,
+      variants: f.variants || null,
+      unitGrams: f.unitGrams || null,
+      unitName: f.unitName || "unidad",
+      boneFraction: f.boneFraction || null
     };
   }
 
+  function makeCustomFood({ name, kcal, protein, carbs, fat, barcode, source }) {
+    const food = {
+      name,
+      icon: "🍽️",
+      source: source || "created",
+      subtitle: source === "barcode" ? "Producto" : "Creado por vos",
+      base: { kcal: kcal || 0, protein: protein || 0, carbs: carbs || 0, fat: fat || 0 },
+      variants: null,
+      unitGrams: null,
+      unitName: "unidad",
+      boneFraction: null
+    };
+    if (barcode) food.barcode = barcode;
+    return food;
+  }
+
+  function findCommon(name) {
+    const n = normalize(name);
+    const f = COMMON_FOODS.find(c => normalize(c.name) === n);
+    return f ? toFood(f) : null;
+  }
+
+  function defaultSelection(food) {
+    return {
+      qty: food.unitGrams ? 1 : 100,
+      portion: food.unitGrams ? "unidad" : "gramos",
+      variant: food.variants ? "crudo" : null,
+      bone: food.boneFraction ? "con" : null
+    };
+  }
+
+  // Macros por 100 g del peso pesado. Si se peso con hueso, el hueso no aporta
+  // nutrientes: se descuenta su fraccion para no sobreestimar.
+  function macrosPer100(food, sel) {
+    const m = food.variants ? food.variants[sel.variant || "crudo"] : food.base;
+    const factor = food.boneFraction && sel.bone === "con" ? 1 - food.boneFraction : 1;
+    return { kcal: m.kcal * factor, protein: m.protein * factor, carbs: m.carbs * factor, fat: m.fat * factor };
+  }
+
+  function gramsOf(food, sel) {
+    const qty = Number(sel.qty) || 0;
+    return sel.portion === "unidad" && food.unitGrams ? qty * food.unitGrams : qty;
+  }
+
+  function compute(food, sel) {
+    const grams = gramsOf(food, sel);
+    const per = macrosPer100(food, sel);
+    const k = grams / 100;
+    return { grams, kcal: per.kcal * k, protein: per.protein * k, carbs: per.carbs * k, fat: per.fat * k };
+  }
+
+  function fmtNum(n) {
+    return Number(n).toLocaleString("es-AR", { maximumFractionDigits: 1 });
+  }
+
+  // "2 unidad (100 g)" / "300 g"
+  function qtyLabel(food, sel) {
+    const grams = Math.round(gramsOf(food, sel));
+    if (sel.portion === "unidad" && food.unitGrams) {
+      return `${fmtNum(sel.qty)} ${food.unitName} (${grams} g)`;
+    }
+    return `${grams} g`;
+  }
+
+  function qualifiersOf(food, sel) {
+    const q = [];
+    if (food.variants) q.push(sel.variant);
+    if (food.boneFraction) q.push(sel.bone === "con" ? "con hueso" : "sin hueso");
+    return q;
+  }
+
   function searchCommon(query) {
-    const q = query.trim().toLowerCase();
+    const q = normalize(query);
     if (!q) return [];
-    return COMMON_FOODS.filter(f => f.name.toLowerCase().includes(q)).map(toSearchResult);
+    return COMMON_FOODS.filter(f => normalize(f.name).includes(q)).map(toFood);
   }
 
-  // extraFoods: alimentos guardados por el usuario (manuales o ya usados antes),
-  // en formato {name, kcal, protein, carbs, fat}. Tienen prioridad sobre la lista
-  // comun porque son datos reales que el usuario cargo (ej. de una etiqueta).
-  function search(query, extraFoods) {
-    const q = query.trim().toLowerCase();
-    const extra = (extraFoods || []).filter(f => f.name.toLowerCase().includes(q));
-    const common = searchCommon(query).filter(
-      f => !extra.some(e => e.name.toLowerCase() === f.name.toLowerCase())
-    );
-    return { results: [...extra, ...common] };
+  // personalFoods: alimentos creados / escaneados por el usuario. Tienen prioridad
+  // sobre la lista comun porque son datos reales que el usuario cargo.
+  function search(query, personalFoods) {
+    const q = normalize(query);
+    if (!q) return [];
+    const personal = (personalFoods || []).filter(f => normalize(f.name).includes(q));
+    const taken = new Set(personal.map(f => normalize(f.name)));
+    const common = searchCommon(query).filter(f => !taken.has(normalize(f.name)));
+    return [...personal, ...common];
   }
 
-  return { search, searchCommon, COMMON_FOODS };
+  return {
+    COMMON_FOODS, normalize, iconFor, tintFor, toFood, makeCustomFood, findCommon,
+    defaultSelection, macrosPer100, gramsOf, compute, fmtNum, qtyLabel, qualifiersOf,
+    searchCommon, search
+  };
 })();

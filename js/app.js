@@ -5,6 +5,19 @@
     { key: "merienda", label: "Merienda" },
     { key: "cena", label: "Cena" }
   ];
+  const DAY_LETTERS = ["L", "M", "M", "J", "V", "S", "D"];
+  const CAL_PER_GRAM = { Protein: 4, Carbs: 4, Fat: 9 };
+
+  const $ = (id) => document.getElementById(id);
+  const mealLabel = (key) => MEALS.find(m => m.key === key).label;
+  const fmtInt = (n) => Math.round(n).toLocaleString("es-AR");
+  const fmtG = (n) => Number(n).toLocaleString("es-AR", { maximumFractionDigits: n < 10 ? 1 : 0 });
+
+  function esc(str) {
+    const d = document.createElement("div");
+    d.textContent = str;
+    return d.innerHTML;
+  }
 
   function guessMealByTime(date) {
     const h = (date || new Date()).getHours();
@@ -14,64 +27,273 @@
     return "cena";
   }
 
-  let state = {
+  const state = {
     currentDate: new Date(),
     settings: Storage.getSettings(),
-    pendingFood: null,   // alimento seleccionado esperando confirmar porcion
-    pendingMeal: "desayuno", // comida elegida dentro del modal de porcion
-    selectedMeal: null,  // comida preseleccionada al entrar a Buscar
-    pendingBarcode: null // codigo de barras escaneado esperando carga manual
+    selectedMeal: null,   // comida preseleccionada al entrar a Buscar
+    searchTab: "db",
+    showAllRecents: false,
+    sheet: null,          // alimento abierto en la hoja de detalle
+    pendingBarcode: null  // codigo escaneado esperando carga manual
   };
 
-  const $ = (id) => document.getElementById(id);
+  // ---------- Fechas ----------
+  function addDays(d, n) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return x;
+  }
 
-  // ---------- Navegacion entre pantallas ----------
+  function mondayOf(d) {
+    return addDays(d, -((d.getDay() + 6) % 7));
+  }
+
+  function sameDay(a, b) {
+    return a.toDateString() === b.toDateString();
+  }
+
+  function dateLabel(d) {
+    const today = new Date();
+    if (sameDay(d, today)) return "Hoy";
+    if (sameDay(d, addDays(today, -1))) return "Ayer";
+    if (sameDay(d, addDays(today, 1))) return "Mañana";
+    return d.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" });
+  }
+
+  const dateKey = (d) => Storage.todayKey(d);
+
+  // ---------- Datos viejos (esquema anterior) ----------
+  const LEGACY_QUALS = new Set(["crudo", "cocido", "con hueso", "sin hueso"]);
+
+  // "Chuleta de cerdo (crudo, con hueso)" -> { base, quals }
+  function parseLegacyName(full) {
+    const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(full);
+    if (m) {
+      const parts = m[2].split(",").map(s => s.trim().toLowerCase());
+      if (parts.every(p => LEGACY_QUALS.has(p))) return { base: m[1].trim(), quals: parts };
+    }
+    return { base: full, quals: [] };
+  }
+
+  // Reconstruye alimento + seleccion a partir de una entrada guardada en el esquema viejo.
+  function resolveLegacyEntry(entry) {
+    const { base, quals } = parseLegacyName(entry.name);
+    const norm = FoodApi.normalize;
+    let food = FoodApi.findCommon(base)
+      || Storage.getPersonalFoods().find(f => norm(f.name) === norm(entry.name));
+    if (!food) {
+      const k = entry.grams > 0 ? 100 / entry.grams : 0;
+      food = FoodApi.makeCustomFood({
+        name: base, kcal: entry.kcal * k, protein: entry.protein * k,
+        carbs: entry.carbs * k, fat: entry.fat * k, source: "created"
+      });
+    }
+    const sel = FoodApi.defaultSelection(food);
+    sel.qty = entry.grams;
+    sel.portion = "gramos";
+    if (food.variants) sel.variant = quals.includes("cocido") ? "cocido" : "crudo";
+    if (food.boneFraction) sel.bone = quals.includes("sin hueso") ? "sin" : "con";
+    if (food.unitGrams && entry.grams > 0 && entry.grams % food.unitGrams === 0) {
+      sel.portion = "unidad";
+      sel.qty = entry.grams / food.unitGrams;
+    }
+    return { food, sel };
+  }
+
+  function migrateLegacy() {
+    if (Storage.isMigrated()) return;
+
+    Storage.getLegacyRecents().forEach(item => {
+      if (FoodApi.findCommon(parseLegacyName(item.name).base)) return;
+      Storage.addCreated(FoodApi.makeCustomFood({
+        name: item.name, kcal: item.kcal, protein: item.protein,
+        carbs: item.carbs, fat: item.fat, barcode: item.barcode, source: "created"
+      }));
+    });
+
+    const entries = [];
+    Storage.allLogKeys().forEach(k => Storage.getLog(k).forEach(e => { if (!e.food) entries.push(e); }));
+    entries.sort((a, b) => String(b.time).localeCompare(String(a.time)));
+    const recents = [];
+    const seen = new Set();
+    for (const e of entries) {
+      const { food, sel } = resolveLegacyEntry(e);
+      const key = food.name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      recents.push({ food, sel, label: FoodApi.qtyLabel(food, sel), kcal: e.kcal, ts: e.time });
+      if (recents.length >= 40) break;
+    }
+    Storage.setRecents(recents);
+    Storage.dropLegacyRecents();
+    Storage.markMigrated();
+  }
+
+  function mealOf(entry) {
+    return entry.meal || guessMealByTime(new Date(entry.time));
+  }
+
+  // Datos para mostrar una entrada (nueva o del esquema viejo).
+  function entryView(e) {
+    if (e.food) {
+      return { name: e.name, icon: e.icon || e.food.icon, quals: e.qualifiers || [], label: e.label };
+    }
+    const { base, quals } = parseLegacyName(e.name);
+    const { food, sel } = resolveLegacyEntry(e);
+    return { name: base, icon: food.icon, quals, label: FoodApi.qtyLabel(food, sel) };
+  }
+
+  // ---------- Navegacion ----------
   function showScreen(name, meal) {
     document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
     $("screen-" + name).classList.add("active");
-    document.querySelectorAll(".tab-btn").forEach(b => {
-      b.classList.toggle("active", b.dataset.screen === name);
-    });
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.screen === name));
+    document.body.classList.toggle("on-search", name === "buscar");
+    window.scrollTo(0, 0);
+
     if (name === "buscar") {
       state.selectedMeal = meal || guessMealByTime();
-      const mealLabel = MEALS.find(m => m.key === state.selectedMeal).label;
-      $("buscarTitle").textContent = "Agregar a " + mealLabel;
+      $("buscarTitle").textContent = "Agregar a " + mealLabel(state.selectedMeal);
       $("searchInput").value = "";
-      $("resultsList").innerHTML = "";
-      $("commonTitle").hidden = true;
-      setTimeout(() => $("searchInput").focus(), 200);
+      state.searchTab = "db";
+      state.showAllRecents = false;
+      renderSearch();
     }
     if (name === "ajustes") loadSettingsIntoForm();
+    if (name === "hoy") renderPlan();
   }
 
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => showScreen(btn.dataset.screen));
   });
-  $("fabAdd").addEventListener("click", () => showScreen("buscar"));
   $("closeBuscar").addEventListener("click", () => showScreen("hoy"));
+  $("editGoalsBtn").addEventListener("click", () => showScreen("ajustes"));
+  $("kcalTitleBtn").addEventListener("click", () => showScreen("ajustes"));
+  document.querySelectorAll(".sc-macro").forEach(b => b.addEventListener("click", () => showScreen("ajustes")));
 
-  // ---------- Fecha ----------
-  function fmtDateLabel(date) {
-    const today = new Date();
-    const isToday = date.toDateString() === today.toDateString();
-    if (isToday) return "Hoy";
-    const yest = new Date(today); yest.setDate(today.getDate() - 1);
-    if (date.toDateString() === yest.toDateString()) return "Ayer";
-    return date.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" });
+  // ---------- Plan: tira semanal ----------
+  function renderWeekStrip() {
+    const strip = $("weekStrip");
+    strip.innerHTML = "";
+    const monday = mondayOf(state.currentDate);
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(monday, i);
+      const sel = sameDay(d, state.currentDate);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "wd" + (sel ? " sel" : "");
+      btn.innerHTML = `<span class="wd-letter">${DAY_LETTERS[i]}</span><span class="wd-num">${d.getDate()}</span>` +
+        `<span class="wd-dot${Storage.hasLog(dateKey(d)) ? " has" : ""}"></span>`;
+      btn.addEventListener("click", () => { state.currentDate = d; renderPlan(); });
+      strip.appendChild(btn);
+    }
   }
 
-  $("prevDay").addEventListener("click", () => {
-    state.currentDate.setDate(state.currentDate.getDate() - 1);
-    renderToday();
-  });
-  $("nextDay").addEventListener("click", () => {
-    const today = new Date();
-    if (state.currentDate.toDateString() === today.toDateString()) return;
-    state.currentDate.setDate(state.currentDate.getDate() + 1);
-    renderToday();
+  let swipeX = null;
+  $("weekStrip").addEventListener("touchstart", (e) => { swipeX = e.touches[0].clientX; }, { passive: true });
+  $("weekStrip").addEventListener("touchend", (e) => {
+    if (swipeX === null) return;
+    const dx = e.changedTouches[0].clientX - swipeX;
+    swipeX = null;
+    if (Math.abs(dx) < 50) return;
+    state.currentDate = addDays(state.currentDate, dx < 0 ? 7 : -7);
+    renderPlan();
+  }, { passive: true });
+
+  $("datePicker").addEventListener("change", (e) => {
+    const [y, m, d] = e.target.value.split("-").map(Number);
+    if (!y) return;
+    state.currentDate = new Date(y, m - 1, d);
+    renderPlan();
   });
 
-  // ---------- Render pantalla Hoy ----------
+  // ---------- Plan: resumen con arco ----------
+  const BZ = [[10, 54], [150, 6], [290, 54]];
+
+  function bezPoint(u) {
+    const a = (1 - u) * (1 - u), b = 2 * (1 - u) * u, c = u * u;
+    return [
+      a * BZ[0][0] + b * BZ[1][0] + c * BZ[2][0],
+      a * BZ[0][1] + b * BZ[1][1] + c * BZ[2][1]
+    ];
+  }
+
+  function bezTangent(u) {
+    return [
+      2 * (1 - u) * (BZ[1][0] - BZ[0][0]) + 2 * u * (BZ[2][0] - BZ[1][0]),
+      2 * (1 - u) * (BZ[1][1] - BZ[0][1]) + 2 * u * (BZ[2][1] - BZ[1][1])
+    ];
+  }
+
+  const BZ_TABLE = (() => {
+    const table = [{ u: 0, len: 0 }];
+    let prev = bezPoint(0);
+    let acc = 0;
+    for (let i = 1; i <= 200; i++) {
+      const u = i / 200;
+      const p = bezPoint(u);
+      acc += Math.hypot(p[0] - prev[0], p[1] - prev[1]);
+      table.push({ u, len: acc });
+      prev = p;
+    }
+    return table;
+  })();
+  const BZ_LEN = BZ_TABLE[BZ_TABLE.length - 1].len;
+
+  // Parametro u de la curva a una fraccion (0..1) de su largo.
+  function uAtFraction(f) {
+    const target = Math.max(0, Math.min(1, f)) * BZ_LEN;
+    let i = 1;
+    while (i < BZ_TABLE.length - 1 && BZ_TABLE[i].len < target) i++;
+    const a = BZ_TABLE[i - 1], b = BZ_TABLE[i];
+    return a.u + (b.u - a.u) * ((target - a.len) / ((b.len - a.len) || 1));
+  }
+
+  const TICK_LO = 0.37;
+  const TICK_HI = 0.62;
+
+  // El arco marca el rango objetivo (meta -10% / +10%) en el centro.
+  function gaugeFraction(v, goal) {
+    if (goal <= 0) return 0;
+    const lo = goal * 0.9, hi = goal * 1.1;
+    if (v <= lo) return TICK_LO * (v / lo);
+    if (v <= hi) return TICK_LO + (TICK_HI - TICK_LO) * ((v - lo) / (hi - lo));
+    return TICK_HI + (1 - TICK_HI) * Math.min(1, (v - hi) / (goal * 0.4));
+  }
+
+  function renderGauge(eaten, goal) {
+    const fill = $("gaugeFill");
+    const lo = goal * 0.9, hi = goal * 1.1;
+    fill.style.strokeDasharray = `${(gaugeFraction(eaten, goal) * BZ_LEN).toFixed(2)} ${BZ_LEN.toFixed(2)}`;
+    fill.style.opacity = eaten > 0 ? 1 : 0;
+    fill.style.stroke = eaten > hi ? "var(--red)" : "var(--green)";
+
+    const ticks = $("gaugeTicks");
+    const labels = $("gaugeLabels");
+    ticks.innerHTML = "";
+    labels.innerHTML = "";
+    [[TICK_LO, lo], [TICK_HI, hi]].forEach(([f, value]) => {
+      const u = uAtFraction(f);
+      const [x, y] = bezPoint(u);
+      const [tx, ty] = bezTangent(u);
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("class", "gauge-tick");
+      rect.setAttribute("x", "-1.5");
+      rect.setAttribute("y", "-8");
+      rect.setAttribute("width", "3");
+      rect.setAttribute("height", "16");
+      rect.setAttribute("rx", "1.5");
+      rect.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${(Math.atan2(ty, tx) * 180 / Math.PI).toFixed(2)})`);
+      ticks.appendChild(rect);
+
+      const label = document.createElement("span");
+      label.className = "gauge-label";
+      label.style.left = (x / 300 * 100) + "%";
+      label.textContent = fmtInt(value);
+      labels.appendChild(label);
+    });
+  }
+
   function computeMacroTargets(settings) {
     const goal = settings.goalKcal;
     const pct = settings.macroPct;
@@ -82,330 +304,389 @@
     };
   }
 
-  function renderToday() {
-    $("dateLabel").textContent = fmtDateLabel(state.currentDate);
-    const dateKey = Storage.todayKey(state.currentDate);
-    const entries = Storage.getLog(dateKey);
-    const settings = state.settings;
-    const targets = computeMacroTargets(settings);
-
-    const totals = entries.reduce((acc, e) => {
+  function sumEntries(list) {
+    return list.reduce((acc, e) => {
       acc.kcal += e.kcal; acc.protein += e.protein; acc.carbs += e.carbs; acc.fat += e.fat;
       return acc;
     }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
-
-    const over = totals.kcal > settings.goalKcal;
-    $("kcalGoalTxt").textContent = settings.goalKcal;
-    $("kcalEatenTxt").textContent = Math.round(totals.kcal);
-    $("kcalEatenTxt").style.color = over ? "var(--red)" : "var(--green)";
-
-    const circumference = 389.6;
-    const pctEaten = Math.max(0, Math.min(1, totals.kcal / settings.goalKcal));
-    const ring = $("calRing");
-    ring.style.strokeDashoffset = circumference * (1 - pctEaten);
-    ring.style.stroke = over ? "var(--red)" : "var(--green)";
-
-    setBar("Protein", totals.protein, targets.proteinG);
-    setBar("Carbs", totals.carbs, targets.carbsG);
-    setBar("Fat", totals.fat, targets.fatG);
-
-    renderMeals(entries, dateKey);
   }
 
-  function setBar(key, value, target) {
-    const pct = target > 0 ? Math.max(0, Math.min(100, (value / target) * 100)) : 0;
-    $("bar" + key).style.width = pct + "%";
-    $("txt" + key).textContent = `${Math.round(value)}/${target}g`;
+  function setMacro(key, value, target) {
+    $("mv" + key).textContent = `${Math.round(value)} / ${target} g`;
+    $("mb" + key).style.width = (target > 0 ? Math.min(100, value / target * 100) : 0) + "%";
   }
 
-  function mealOf(entry) {
-    return entry.meal || guessMealByTime(new Date(entry.time));
+  function renderMini(totals, goal, targets) {
+    const col = (name, val, ratio, cls) =>
+      `<div class="mini-col"><span class="mc-name">${name}</span><span class="mc-val">${val}</span>` +
+      `<span class="bar-track"><span class="bar-fill ${cls}" style="width:${Math.min(100, Math.max(0, ratio * 100))}%"></span></span></div>`;
+    const ratio = (v, t) => (t > 0 ? v / t : 0);
+    $("miniSummary").innerHTML =
+      col("kcal", `${fmtInt(totals.kcal)} / ${fmtInt(goal)}`, ratio(totals.kcal, goal), "kcal") +
+      col("Proteínas", `${Math.round(totals.protein)} / ${targets.proteinG} g`, ratio(totals.protein, targets.proteinG), "protein") +
+      col("Carbs", `${Math.round(totals.carbs)} / ${targets.carbsG} g`, ratio(totals.carbs, targets.carbsG), "carbs") +
+      col("Grasas", `${Math.round(totals.fat)} / ${targets.fatG} g`, ratio(totals.fat, targets.fatG), "fat");
   }
 
-  function renderMeals(entries, dateKey) {
-    const container = $("mealsContainer");
-    container.innerHTML = "";
+  // ---------- Plan: comidas ----------
+  function entryRow(entry, dk) {
+    const v = entryView(entry);
+    const done = entry.done !== false;
+    const row = document.createElement("div");
+    row.className = "entry-row" + (done ? "" : " off");
+    row.innerHTML =
+      `<button class="er-main" type="button">` +
+        `<span class="er-icon">${v.icon}</span>` +
+        `<span class="er-name-wrap"><span class="er-name">${esc(v.name)}</span>` +
+          (v.quals.length ? `<span class="er-qual">${esc(v.quals.join(" · "))}</span>` : "") +
+        `</span>` +
+        `<span class="er-right"><span class="er-qty">${esc(v.label)}</span><span class="er-kcal">${Math.round(entry.kcal)} kcal</span></span>` +
+      `</button>` +
+      `<button class="er-check${done ? " on" : ""}" type="button" aria-label="Marcar como comido">&#10003;</button>`;
+
+    row.querySelector(".er-main").addEventListener("click", () => {
+      const resolved = entry.food ? { food: entry.food, sel: entry.sel } : resolveLegacyEntry(entry);
+      openSheet({ food: resolved.food, sel: { ...resolved.sel }, mode: "edit", entry, dateKey: dk, meal: mealOf(entry) });
+    });
+    row.querySelector(".er-check").addEventListener("click", () => {
+      Storage.updateEntry(dk, entry.id, { ...entry, done: !done });
+      renderPlan();
+    });
+    return row;
+  }
+
+  function renderMeals(entries, dk) {
+    const box = $("mealsContainer");
+    box.innerHTML = "";
     MEALS.forEach(meal => {
-      const mealEntries = entries.filter(e => mealOf(e) === meal.key);
-      const mealTotals = mealEntries.reduce((acc, e) => {
-        acc.kcal += e.kcal; acc.protein += e.protein; acc.carbs += e.carbs; acc.fat += e.fat;
-        return acc;
-      }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
-
-      const section = document.createElement("div");
-      section.className = "meal-section";
-
-      const header = document.createElement("div");
-      header.className = "meal-header";
-      header.innerHTML = `
-        <div class="meal-header-left">
-          <span class="meal-name">${meal.label}</span>
-          <span class="meal-kcal">${mealEntries.length ? `${Math.round(mealTotals.kcal)} kcal · P${Math.round(mealTotals.protein)} C${Math.round(mealTotals.carbs)} G${Math.round(mealTotals.fat)}` : ""}</span>
-        </div>
-        <button class="meal-add-btn" aria-label="Agregar a ${meal.label}">+</button>
-      `;
-      header.querySelector(".meal-add-btn").addEventListener("click", () => showScreen("buscar", meal.key));
-      section.appendChild(header);
-
-      if (!mealEntries.length) {
-        const empty = document.createElement("div");
-        empty.className = "meal-empty";
-        empty.textContent = "Sin registros";
-        section.appendChild(empty);
-      } else {
-        const list = document.createElement("div");
-        list.className = "food-list";
-        mealEntries.slice().reverse().forEach(entry => {
-          const div = document.createElement("div");
-          div.className = "food-item";
-          div.innerHTML = `
-            <div class="food-item-main">
-              <div class="food-item-name">${escapeHtml(entry.name)}</div>
-              <div class="food-item-sub">${entry.grams} g · P ${Math.round(entry.protein)} · C ${Math.round(entry.carbs)} · G ${Math.round(entry.fat)}</div>
-            </div>
-            <div class="food-item-kcal">${Math.round(entry.kcal)}</div>
-            <button class="food-item-del" data-id="${entry.id}" aria-label="Eliminar">&#128465;</button>
-          `;
-          div.querySelector(".food-item-del").addEventListener("click", () => {
-            Storage.removeEntry(dateKey, entry.id);
-            renderToday();
-          });
-          list.appendChild(div);
-        });
-        section.appendChild(list);
-      }
-
-      container.appendChild(section);
+      const list = entries.filter(e => mealOf(e) === meal.key);
+      const t = sumEntries(list.filter(e => e.done !== false));
+      const card = document.createElement("div");
+      card.className = "meal-card";
+      card.innerHTML =
+        `<div class="mc-head"><h3>${meal.label}</h3>` +
+        `<div class="mc-sub">&#128293; ${Math.round(t.kcal)} kcal &bull; ${Math.round(t.protein)} P | ${Math.round(t.carbs)} C | ${Math.round(t.fat)} G</div></div>` +
+        `<div class="entries"></div>` +
+        `<button class="meal-add" type="button" aria-label="Agregar a ${meal.label}">+</button>`;
+      const entriesBox = card.querySelector(".entries");
+      list.forEach(e => entriesBox.appendChild(entryRow(e, dk)));
+      card.querySelector(".meal-add").addEventListener("click", () => showScreen("buscar", meal.key));
+      box.appendChild(card);
     });
   }
 
-  function escapeHtml(str) {
+  function renderPlan() {
+    const dk = dateKey(state.currentDate);
+    const entries = Storage.getLog(dk);
+    const goal = state.settings.goalKcal;
+    const targets = computeMacroTargets(state.settings);
+    const totals = sumEntries(entries.filter(e => e.done !== false));
+
+    $("dateLabel").textContent = dateLabel(state.currentDate);
+    $("datePicker").value = dk;
+    renderWeekStrip();
+
+    $("kcalEaten").textContent = fmtInt(totals.kcal);
+    $("kcalGoal").textContent = fmtInt(goal);
+    renderGauge(totals.kcal, goal);
+    setMacro("Protein", totals.protein, targets.proteinG);
+    setMacro("Carbs", totals.carbs, targets.carbsG);
+    setMacro("Fat", totals.fat, targets.fatG);
+    renderMini(totals, goal, targets);
+    renderMeals(entries, dk);
+  }
+
+  // El resumen compacto aparece cuando la tarjeta grande sale de pantalla.
+  new IntersectionObserver(([ent]) => {
+    $("miniSummary").hidden = !(!ent.isIntersecting && ent.boundingClientRect.bottom < 120);
+  }, { rootMargin: "-110px 0px 0px 0px", threshold: 0 }).observe($("summaryCard"));
+
+  // ---------- Buscar ----------
+  function foodRow(food, sel, onClick) {
+    const calc = FoodApi.compute(food, sel);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "food-row";
+    btn.innerHTML =
+      `<span class="fr-icon">${food.icon}</span>` +
+      `<span class="fr-main"><span class="fr-name">${esc(food.name)}</span><span class="fr-sub">${esc(food.subtitle)}</span></span>` +
+      `<span class="fr-right"><span class="fr-qty">${esc(FoodApi.qtyLabel(food, sel))}</span><span class="fr-kcal">${Math.round(calc.kcal)} kcal</span></span>`;
+    btn.addEventListener("click", onClick);
+    return btn;
+  }
+
+  function openFood(food, sel) {
+    openSheet({ food, sel: { ...(sel || FoodApi.defaultSelection(food)) }, mode: "add" });
+  }
+
+  function emptyState(text) {
     const d = document.createElement("div");
-    d.textContent = str;
-    return d.innerHTML;
+    d.className = "empty-state";
+    d.textContent = text;
+    return d;
   }
 
-  // ---------- Busqueda ----------
-  $("searchInput").addEventListener("input", (e) => {
-    const q = e.target.value;
-    if (!q.trim()) {
-      $("commonTitle").hidden = true;
-      $("resultsList").innerHTML = "";
-      return;
-    }
-    const { results } = FoodApi.search(q, Storage.getRecent());
-    $("commonTitle").hidden = false;
-    $("commonTitle").textContent = "Resultados";
-    renderResults(results);
-  });
-
-  function renderResults(foods, source) {
-    const list = $("resultsList");
-    if (!foods.length) {
-      list.innerHTML = '<div class="empty-state">Sin resultados. Proba con otro nombre o cargalo manualmente.</div>';
-      return;
-    }
-    list.innerHTML = "";
-    foods.forEach(food => {
-      const div = document.createElement("div");
-      div.className = "result-item";
-      div.innerHTML = `
-        <div class="result-main">
-          <div class="result-name">${escapeHtml(food.name)}</div>
-          <div class="result-sub">${Math.round(food.kcal)} kcal · P${Math.round(food.protein)} C${Math.round(food.carbs)} G${Math.round(food.fat)} /100g</div>
-        </div>
-        <button class="result-add" aria-label="Agregar">+</button>
-      `;
-      div.querySelector(".result-add").addEventListener("click", () => openPortionModal(food));
-      list.appendChild(div);
-    });
+  function createButton() {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "create-btn";
+    b.textContent = "+ Crear alimento";
+    b.addEventListener("click", () => { state.pendingBarcode = null; openManualModal(); });
+    return b;
   }
 
-  // ---------- Modal de porcion ----------
-  function setPendingMeal(mealKey) {
-    state.pendingMeal = mealKey;
-    document.querySelectorAll("#portionMealPills .meal-pill").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.meal === mealKey);
-    });
-  }
+  function renderSearch() {
+    document.querySelectorAll("#searchTabs .tab").forEach(t => t.classList.toggle("active", t.dataset.tab === state.searchTab));
+    const box = $("tabContent");
+    box.innerHTML = "";
+    const q = $("searchInput").value.trim();
 
-  document.querySelectorAll("#portionMealPills .meal-pill").forEach(btn => {
-    btn.addEventListener("click", () => setPendingMeal(btn.dataset.meal));
-  });
-
-  function setPendingVariant(variant) {
-    state.pendingVariant = variant;
-    document.querySelectorAll("#portionVariantPills .meal-pill").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.variant === variant);
-    });
-    updatePortionPreview();
-  }
-
-  document.querySelectorAll("#portionVariantPills .meal-pill").forEach(btn => {
-    btn.addEventListener("click", () => setPendingVariant(btn.dataset.variant));
-  });
-
-  function setPendingBone(bone) {
-    state.pendingBone = bone;
-    document.querySelectorAll("#portionBonePills .meal-pill").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.bone === bone);
-    });
-    updatePortionPreview();
-  }
-
-  document.querySelectorAll("#portionBonePills .meal-pill").forEach(btn => {
-    btn.addEventListener("click", () => setPendingBone(btn.dataset.bone));
-  });
-
-  // Si el corte se peso con hueso, el hueso no aporta nutrientes: se descuenta
-  // su fraccion de peso para no sobreestimar kcal/macros sobre el total pesado.
-  function currentFoodMacros() {
-    const f = state.pendingFood;
-    if (!f) return null;
-    const macros = f.variants ? f.variants[state.pendingVariant] : f;
-    if (f.boneFraction && state.pendingBone === "con") {
-      const factor = 1 - f.boneFraction;
-      return {
-        kcal: macros.kcal * factor,
-        protein: macros.protein * factor,
-        carbs: macros.carbs * factor,
-        fat: macros.fat * factor
-      };
-    }
-    return macros;
-  }
-
-  function openPortionModal(food) {
-    state.pendingFood = food;
-    $("portionFoodName").textContent = food.name;
-
-    if (food.unitGrams) {
-      $("unitRow").hidden = false;
-      $("unitLabel").textContent = `Cantidad (1 = ${food.unitGrams} g)`;
-      $("unitQty").value = 1;
-      $("portionGrams").value = food.unitGrams;
+    if (state.searchTab === "db") {
+      if (q) {
+        const results = FoodApi.search(q, Storage.getPersonalFoods());
+        if (!results.length) {
+          box.appendChild(emptyState("No encontramos ese alimento. Podés crearlo con los datos de la etiqueta."));
+        } else {
+          results.forEach(f => box.appendChild(foodRow(f, FoodApi.defaultSelection(f), () => openFood(f))));
+        }
+        box.appendChild(createButton());
+        return;
+      }
+      const title = document.createElement("div");
+      title.className = "section-title";
+      title.textContent = "Ingresado recientemente";
+      box.appendChild(title);
+      const recents = Storage.getRecents();
+      if (!recents.length) {
+        box.appendChild(emptyState("Todavía no registraste alimentos. Buscá arriba o usá el escáner."));
+        return;
+      }
+      recents.slice(0, state.showAllRecents ? 30 : 5).forEach(r => {
+        box.appendChild(foodRow(r.food, r.sel, () => openFood(r.food, r.sel)));
+      });
+      if (recents.length > 5) {
+        const more = document.createElement("button");
+        more.type = "button";
+        more.className = "pill-btn";
+        more.textContent = state.showAllRecents ? "VER MENOS ▴" : "VER MÁS ▾";
+        more.addEventListener("click", () => { state.showAllRecents = !state.showAllRecents; renderSearch(); });
+        box.appendChild(more);
+      }
+    } else if (state.searchTab === "favs") {
+      const favs = Storage.getFavs();
+      if (!favs.length) {
+        box.appendChild(emptyState("Todavía no tenés favoritos. Tocá el corazón dentro de un alimento para guardarlo acá."));
+      }
+      favs.forEach(f => box.appendChild(foodRow(f, FoodApi.defaultSelection(f), () => openFood(f))));
     } else {
-      $("unitRow").hidden = true;
-      $("portionGrams").value = 100;
+      box.appendChild(createButton());
+      const created = Storage.getCreated();
+      if (!created.length) box.appendChild(emptyState("Los alimentos que crees van a aparecer acá."));
+      created.forEach(f => box.appendChild(foodRow(f, FoodApi.defaultSelection(f), () => openFood(f))));
     }
-
-    if (food.variants) {
-      $("portionVariantPills").hidden = false;
-      setPendingVariant("crudo");
-    } else {
-      $("portionVariantPills").hidden = true;
-      state.pendingVariant = null;
-    }
-
-    if (food.boneFraction) {
-      $("portionBonePills").hidden = false;
-      setPendingBone("con");
-    } else {
-      $("portionBonePills").hidden = true;
-      state.pendingBone = null;
-      updatePortionPreview();
-    }
-
-    setPendingMeal(state.selectedMeal || guessMealByTime());
-    $("portionModal").hidden = false;
   }
 
-  function applyUnitQty() {
-    const food = state.pendingFood;
-    if (!food || !food.unitGrams) return;
-    const qty = parseFloat($("unitQty").value) || 0;
-    $("portionGrams").value = Math.round(qty * food.unitGrams);
-    updatePortionPreview();
-  }
-
-  $("unitQty").addEventListener("input", applyUnitQty);
-  $("unitPlus").addEventListener("click", () => {
-    $("unitQty").value = (parseFloat($("unitQty").value) || 0) + 1;
-    applyUnitQty();
+  $("searchInput").addEventListener("input", () => {
+    state.searchTab = "db";
+    renderSearch();
   });
-  $("unitMinus").addEventListener("click", () => {
-    $("unitQty").value = Math.max(0, (parseFloat($("unitQty").value) || 0) - 1);
-    applyUnitQty();
+  document.querySelectorAll("#searchTabs .tab").forEach(t => {
+    t.addEventListener("click", () => { state.searchTab = t.dataset.tab; renderSearch(); });
   });
 
-  function updatePortionPreview() {
-    const grams = parseFloat($("portionGrams").value) || 0;
-    const source = currentFoodMacros();
-    if (!source) return;
-    const factor = grams / 100;
-    $("ppKcal").textContent = Math.round(source.kcal * factor);
-    $("ppProtein").textContent = Math.round(source.protein * factor);
-    $("ppCarbs").textContent = Math.round(source.carbs * factor);
-    $("ppFat").textContent = Math.round(source.fat * factor);
-  }
-
-  $("portionGrams").addEventListener("input", updatePortionPreview);
-  $("portionCancel").addEventListener("click", () => { $("portionModal").hidden = true; state.pendingFood = null; });
-
-  $("portionConfirm").addEventListener("click", () => {
-    const grams = parseFloat($("portionGrams").value) || 0;
-    const f = state.pendingFood;
-    const source = currentFoodMacros();
-    if (!f || !source || grams <= 0) return;
-    const factor = grams / 100;
-    const qualifiers = [];
-    if (f.variants) qualifiers.push(state.pendingVariant);
-    if (f.boneFraction) qualifiers.push(state.pendingBone === "con" ? "con hueso" : "sin hueso");
-    const displayName = qualifiers.length ? `${f.name} (${qualifiers.join(", ")})` : f.name;
-    const entry = {
-      id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
-      name: displayName,
-      grams,
-      kcal: source.kcal * factor,
-      protein: source.protein * factor,
-      carbs: source.carbs * factor,
-      fat: source.fat * factor,
-      meal: state.pendingMeal,
-      time: new Date().toISOString()
+  // ---------- Hoja de detalle del alimento ----------
+  function openSheet({ food, sel, mode, entry, dateKey: dk, meal }) {
+    state.sheet = {
+      food, sel, mode,
+      entry: entry || null,
+      dateKey: dk || null,
+      meal: meal || state.selectedMeal || guessMealByTime()
     };
-    const dateKey = Storage.todayKey(state.currentDate);
-    Storage.addEntry(dateKey, entry);
-    const recentFood = { name: displayName, kcal: source.kcal, protein: source.protein, carbs: source.carbs, fat: source.fat };
-    if (f.barcode) recentFood.barcode = f.barcode;
-    Storage.addRecent(recentFood);
-    $("portionModal").hidden = true;
-    state.pendingFood = null;
-    showToast("Agregado a " + fmtDateLabel(state.currentDate));
-    showScreen("hoy");
-    renderToday();
+
+    $("sheetHero").style.setProperty("--tint", FoodApi.tintFor(food.icon));
+    $("sheetIcon").textContent = food.icon;
+    $("sheetName").textContent = food.name;
+    $("sheetSub").textContent = food.subtitle;
+    $("sheetDelete").hidden = mode !== "edit";
+    $("sheetFav").classList.toggle("fav-on", Storage.isFav(food.name));
+
+    const portion = $("sheetPortion");
+    portion.innerHTML = "";
+    if (food.unitGrams) portion.add(new Option(`${food.unitName} (${food.unitGrams} g)`, "unidad"));
+    portion.add(new Option("gramos", "gramos"));
+
+    $("sheetVariantWrap").hidden = !food.variants;
+    $("sheetBoneWrap").hidden = !food.boneFraction;
+    $("sheetMeal").value = state.sheet.meal;
+
+    syncSheetInputs();
+    updateSheet();
+    $("foodSheet").hidden = false;
+    $("foodSheet").querySelector(".sheet-scroll").scrollTop = 0;
+  }
+
+  function syncSheetInputs() {
+    const { sel } = state.sheet;
+    $("sheetQty").value = sel.qty;
+    $("sheetPortion").value = sel.portion;
+    if (sel.variant) $("sheetVariant").value = sel.variant;
+    if (sel.bone) $("sheetBone").value = sel.bone;
+  }
+
+  function updateSheet() {
+    const { food, sel, mode, meal } = state.sheet;
+    const calc = FoodApi.compute(food, sel);
+
+    let data = "Datos por " + FoodApi.qtyLabel(food, sel);
+    if (food.variants) data += ` - peso ${sel.variant}`;
+    if (food.boneFraction) data += sel.bone === "con" ? ", con hueso" : ", sin hueso";
+    $("sheetData").textContent = data;
+
+    $("stKcal").textContent = fmtInt(calc.kcal);
+    $("stProtein").textContent = fmtG(calc.protein) + " g";
+    $("stCarbs").textContent = fmtG(calc.carbs) + " g";
+    $("stFat").textContent = fmtG(calc.fat) + " g";
+
+    const cal = { protein: calc.protein * 4, carbs: calc.carbs * 4, fat: calc.fat * 9 };
+    const total = cal.protein + cal.carbs + cal.fat;
+    const bar = $("distBar");
+    const legend = $("distLegend");
+    bar.innerHTML = "";
+    legend.innerHTML = "";
+    if (total > 0) {
+      [["protein", "Proteínas"], ["carbs", "Carbs"], ["fat", "Grasas"]].forEach(([key, name]) => {
+        if (cal[key] <= 0) return;
+        const seg = document.createElement("span");
+        seg.className = "dist-seg " + key;
+        seg.style.flex = String(cal[key]);
+        bar.appendChild(seg);
+        const item = document.createElement("span");
+        item.className = "dist-item";
+        item.innerHTML = `<span class="dot ${key}"></span>${name} ${Math.round(cal[key] / total * 100)}%`;
+        legend.appendChild(item);
+      });
+    }
+
+    const per = FoodApi.macrosPer100(food, sel);
+    $("nutriTable").innerHTML =
+      `<tr><th></th><th>Por 100 g</th><th>Esta porción</th></tr>` +
+      `<tr><td>Calorías</td><td>${fmtInt(per.kcal)} kcal</td><td>${fmtInt(calc.kcal)} kcal</td></tr>` +
+      `<tr><td>Proteínas</td><td>${fmtG(per.protein)} g</td><td>${fmtG(calc.protein)} g</td></tr>` +
+      `<tr><td>Carbohidratos</td><td>${fmtG(per.carbs)} g</td><td>${fmtG(calc.carbs)} g</td></tr>` +
+      `<tr><td>Grasas</td><td>${fmtG(per.fat)} g</td><td>${fmtG(calc.fat)} g</td></tr>`;
+
+    $("sheetAdd").textContent = mode === "edit" ? "Guardar cambios" : "Agregar a " + mealLabel(meal);
+  }
+
+  function closeSheet() {
+    $("foodSheet").hidden = true;
+    state.sheet = null;
+  }
+
+  $("sheetQty").addEventListener("input", (e) => {
+    state.sheet.sel.qty = parseFloat(e.target.value) || 0;
+    updateSheet();
   });
 
-  // ---------- Alimento manual ----------
+  $("sheetPortion").addEventListener("change", (e) => {
+    const { food, sel } = state.sheet;
+    const grams = FoodApi.gramsOf(food, sel);
+    sel.portion = e.target.value;
+    sel.qty = sel.portion === "unidad"
+      ? (grams > 0 ? Math.round(grams / food.unitGrams * 100) / 100 : 1)
+      : Math.round(grams);
+    syncSheetInputs();
+    updateSheet();
+  });
+
+  $("sheetVariant").addEventListener("change", (e) => { state.sheet.sel.variant = e.target.value; updateSheet(); });
+  $("sheetBone").addEventListener("change", (e) => { state.sheet.sel.bone = e.target.value; updateSheet(); });
+  $("sheetMeal").addEventListener("change", (e) => { state.sheet.meal = e.target.value; updateSheet(); });
+
+  $("sheetFav").addEventListener("click", () => {
+    const on = Storage.toggleFav(state.sheet.food);
+    $("sheetFav").classList.toggle("fav-on", on);
+    showToast(on ? "Agregado a favoritos" : "Quitado de favoritos");
+  });
+
+  $("sheetDelete").addEventListener("click", () => {
+    const s = state.sheet;
+    if (!confirm("¿Eliminar este alimento del diario?")) return;
+    Storage.removeEntry(s.dateKey, s.entry.id);
+    closeSheet();
+    renderPlan();
+    showToast("Eliminado");
+  });
+
+  $("sheetClose").addEventListener("click", closeSheet);
+  $("foodSheet").addEventListener("click", (e) => { if (e.target === $("foodSheet")) closeSheet(); });
+
+  $("sheetAdd").addEventListener("click", () => {
+    const s = state.sheet;
+    const calc = FoodApi.compute(s.food, s.sel);
+    if (calc.grams <= 0) { showToast("Ingresá una cantidad"); return; }
+
+    const data = {
+      name: s.food.name,
+      icon: s.food.icon,
+      qualifiers: FoodApi.qualifiersOf(s.food, s.sel),
+      grams: calc.grams,
+      qty: s.sel.qty,
+      portion: s.sel.portion,
+      label: FoodApi.qtyLabel(s.food, s.sel),
+      kcal: calc.kcal, protein: calc.protein, carbs: calc.carbs, fat: calc.fat,
+      food: s.food,
+      sel: { ...s.sel },
+      meal: s.meal
+    };
+
+    if (s.mode === "edit") {
+      Storage.updateEntry(s.dateKey, s.entry.id, { ...s.entry, ...data });
+      showToast("Cambios guardados");
+    } else {
+      Storage.addEntry(dateKey(state.currentDate), {
+        id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+        time: new Date().toISOString(),
+        done: true,
+        ...data
+      });
+      Storage.pushRecent({ food: s.food, sel: { ...s.sel }, label: data.label, kcal: calc.kcal, ts: new Date().toISOString() });
+      showToast("Agregado a " + mealLabel(s.meal));
+    }
+    closeSheet();
+    showScreen("hoy");
+  });
+
+  // ---------- Crear alimento ----------
   function openManualModal(hint) {
     ["manName", "manKcal", "manProtein", "manCarbs", "manFat"].forEach(id => $(id).value = "");
     $("manualHint").textContent = hint || "Valores por cada 100 g del alimento";
     $("manualModal").hidden = false;
   }
 
-  $("manualAddBtn").addEventListener("click", () => {
-    state.pendingBarcode = null;
-    openManualModal();
-  });
   $("manualCancel").addEventListener("click", () => { $("manualModal").hidden = true; state.pendingBarcode = null; });
 
   $("manualNext").addEventListener("click", () => {
     const name = $("manName").value.trim();
-    const kcal = parseFloat($("manKcal").value) || 0;
-    const protein = parseFloat($("manProtein").value) || 0;
-    const carbs = parseFloat($("manCarbs").value) || 0;
-    const fat = parseFloat($("manFat").value) || 0;
     if (!name) { $("manName").focus(); return; }
+    const food = FoodApi.makeCustomFood({
+      name,
+      kcal: parseFloat($("manKcal").value) || 0,
+      protein: parseFloat($("manProtein").value) || 0,
+      carbs: parseFloat($("manCarbs").value) || 0,
+      fat: parseFloat($("manFat").value) || 0,
+      barcode: state.pendingBarcode,
+      source: "created"
+    });
+    state.pendingBarcode = null;
+    Storage.addCreated(food);
     $("manualModal").hidden = true;
-    const food = { name, kcal, protein, carbs, fat, source: "manual" };
-    if (state.pendingBarcode) {
-      food.barcode = state.pendingBarcode;
-      state.pendingBarcode = null;
-    }
-    openPortionModal(food);
+    renderSearch();
+    openFood(food);
   });
 
   // ---------- Escaner de codigo de barras ----------
-  $("scanBtn").addEventListener("click", () => {
+  $("sbScan").addEventListener("click", () => {
     $("scannerModal").hidden = false;
     $("scannerStatus").textContent = "Apunta la camara al codigo de barras";
     Barcode.start("scannerVideo", onBarcodeDetected, onScannerError);
@@ -427,7 +708,7 @@
 
     const saved = Storage.findByBarcode(code);
     if (saved) {
-      openPortionModal(saved);
+      openFood(saved);
       return;
     }
 
@@ -435,7 +716,7 @@
     try {
       const product = await Barcode.lookup(code);
       if (product) {
-        openPortionModal(product);
+        openFood(FoodApi.makeCustomFood({ ...product, source: "barcode" }));
       } else {
         state.pendingBarcode = code;
         openManualModal("No lo encontramos online. Cargalo con los datos de la etiqueta (por 100 g) y lo vamos a recordar para la proxima.");
@@ -457,8 +738,6 @@
   }
 
   // ---------- Ajustes ----------
-  const CAL_PER_GRAM = { Protein: 4, Carbs: 4, Fat: 9 };
-
   function loadSettingsIntoForm() {
     const s = state.settings;
     $("goalKcal").value = s.goalKcal;
@@ -487,7 +766,6 @@
     updateSumHint();
   }
 
-  // Mover un slider solo actualiza esa macro.
   ["Protein", "Carbs", "Fat"].forEach(key => {
     $("slider" + key).addEventListener("input", () => {
       refreshOneMacro(key);
@@ -528,14 +806,13 @@
     Storage.saveSettings(state.settings);
     showToast("Ajustes guardados");
     showScreen("hoy");
-    renderToday();
   });
 
   $("clearDataBtn").addEventListener("click", () => {
     if (confirm("Esto borra todo lo cargado (comidas y ajustes) en este dispositivo. Continuar?")) {
       Storage.clearAll();
       state.settings = Storage.getSettings();
-      renderToday();
+      renderPlan();
       showToast("Datos borrados");
     }
   });
@@ -548,5 +825,6 @@
   }
 
   // ---------- Init ----------
-  renderToday();
+  migrateLegacy();
+  renderPlan();
 })();
