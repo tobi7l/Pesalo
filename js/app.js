@@ -8,6 +8,10 @@
   const DAY_LETTERS = ["L", "M", "M", "J", "V", "S", "D"];
   const CAL_PER_GRAM = { Protein: 4, Carbs: 4, Fat: 9 };
 
+  const SVG_FLAME = '<svg class="ic-flame" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.500 2s.8 3.300-1 5.800C9.800 10 8 11.500 8 14.200c0 .6.100 1.100.3 1.600C7 15 6.300 13.600 6.500 12 5.200 13.500 4.500 15.200 4.500 17c0 3.200 3.200 5 7.500 5s7.500-1.800 7.500-5c0-3.300-2.300-5.200-3.600-7.300-.8.900-1.700 1.200-2.400 1-.1-1.800.2-4-.8-6.400-.3-.8-.7-1.600-1.200-2.300z"/></svg>';
+  const SVG_CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500l4.500 4.500L19 7.500"/></svg>';
+  const SVG_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.500v15M4.500 12h15"/></svg>';
+
   const $ = (id) => document.getElementById(id);
   const mealLabel = (key) => MEALS.find(m => m.key === key).label;
   const fmtInt = (n) => Math.round(n).toLocaleString("es-AR");
@@ -169,6 +173,7 @@
   $("closeBuscar").addEventListener("click", () => showScreen("hoy"));
   $("editGoalsBtn").addEventListener("click", () => showScreen("ajustes"));
   $("kcalTitleBtn").addEventListener("click", () => showScreen("ajustes"));
+  $("moreGoalsBtn").addEventListener("click", () => showScreen("ajustes"));
   document.querySelectorAll(".sc-macro").forEach(b => b.addEventListener("click", () => showScreen("ajustes")));
 
   // ---------- Plan: tira semanal ----------
@@ -266,7 +271,7 @@
     const lo = goal * 0.9, hi = goal * 1.1;
     fill.style.strokeDasharray = `${(gaugeFraction(eaten, goal) * BZ_LEN).toFixed(2)} ${BZ_LEN.toFixed(2)}`;
     fill.style.opacity = eaten > 0 ? 1 : 0;
-    fill.style.stroke = eaten > hi ? "var(--red)" : "var(--green)";
+    fill.style.stroke = eaten > hi ? "var(--red)" : "var(--accent)";
 
     const ticks = $("gaugeTicks");
     const labels = $("gaugeLabels");
@@ -312,7 +317,7 @@
   }
 
   function setMacro(key, value, target) {
-    $("mv" + key).textContent = `${Math.round(value)} / ${target} g`;
+    $("mv" + key).innerHTML = `${Math.round(value)} / ${target}<span class="unit"> g</span>`;
     $("mb" + key).style.width = (target > 0 ? Math.min(100, value / target * 100) : 0) + "%";
   }
 
@@ -342,7 +347,7 @@
         `</span>` +
         `<span class="er-right"><span class="er-qty">${esc(v.label)}</span><span class="er-kcal">${Math.round(entry.kcal)} kcal</span></span>` +
       `</button>` +
-      `<button class="er-check${done ? " on" : ""}" type="button" aria-label="Marcar como comido">&#10003;</button>`;
+      `<button class="er-check${done ? " on" : ""}" type="button" aria-label="Marcar como comido">${SVG_CHECK}</button>`;
 
     row.querySelector(".er-main").addEventListener("click", () => {
       const resolved = entry.food ? { food: entry.food, sel: entry.sel } : resolveLegacyEntry(entry);
@@ -365,9 +370,9 @@
       card.className = "meal-card";
       card.innerHTML =
         `<div class="mc-head"><h3>${meal.label}</h3>` +
-        `<div class="mc-sub">&#128293; ${Math.round(t.kcal)} kcal &bull; ${Math.round(t.protein)} P | ${Math.round(t.carbs)} C | ${Math.round(t.fat)} G</div></div>` +
+        `<div class="mc-sub">${SVG_FLAME}<span>${Math.round(t.kcal)} kcal &bull; ${Math.round(t.protein)} P | ${Math.round(t.carbs)} C | ${Math.round(t.fat)} G</span></div></div>` +
         `<div class="entries"></div>` +
-        `<button class="meal-add" type="button" aria-label="Agregar a ${meal.label}">+</button>`;
+        `<button class="meal-add" type="button" aria-label="Agregar a ${meal.label}">${SVG_PLUS}</button>`;
       const entriesBox = card.querySelector(".entries");
       list.forEach(e => entriesBox.appendChild(entryRow(e, dk)));
       card.querySelector(".meal-add").addEventListener("click", () => showScreen("buscar", meal.key));
@@ -453,7 +458,7 @@
         return;
       }
       const title = document.createElement("div");
-      title.className = "section-title";
+      title.className = "recent-title";
       title.textContent = "Ingresado recientemente";
       box.appendChild(title);
       const recents = Storage.getRecents();
