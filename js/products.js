@@ -9,14 +9,16 @@ const Products = (() => {
   function load() {
     if (items) return Promise.resolve(items);
     if (loading) return loading;
-    loading = fetch("data/ar-products.json")
-      .then(r => {
-        if (!r.ok) throw new Error("http " + r.status);
-        return r.json();
-      })
-      .then(d => {
-        items = d.items.map(a => ({
+    const get = (url) => fetch(url).then(r => {
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.json();
+    });
+    // Los cargados a mano (curated) van primero; si fallan, igual sirve la base grande.
+    loading = Promise.all([get("data/curated-products.json").catch(() => ({ items: [] })), get("data/ar-products.json")])
+      .then(([cur, big]) => {
+        items = cur.items.concat(big.items).map(a => ({
           code: a[0], name: a[1], brand: a[2], kcal: a[3], protein: a[4], carbs: a[5], fat: a[6],
+          unitGrams: a[7] || null, unitName: a[8] || null,
           nameN: norm(a[1]), hay: norm(a[1] + " " + a[2])
         }));
         return items;
@@ -35,7 +37,8 @@ const Products = (() => {
   function toFood(it) {
     return FoodApi.makeCustomFood({
       name: it.name, brand: it.brand, kcal: it.kcal, protein: it.protein,
-      carbs: it.carbs, fat: it.fat, barcode: it.code, source: "barcode"
+      carbs: it.carbs, fat: it.fat, barcode: it.code, source: "barcode",
+      unitGrams: it.unitGrams, unitName: it.unitName
     });
   }
 
@@ -59,7 +62,7 @@ const Products = (() => {
 
   function findByBarcode(code) {
     if (!items) return null;
-    const it = items.find(x => x.code === code);
+    const it = code && items.find(x => x.code === code);
     return it ? toFood(it) : null;
   }
 

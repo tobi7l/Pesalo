@@ -321,7 +321,7 @@ const FoodApi = (() => {
     };
   }
 
-  function makeCustomFood({ name, kcal, protein, carbs, fat, barcode, source, brand }) {
+  function makeCustomFood({ name, kcal, protein, carbs, fat, barcode, source, brand, unitGrams, unitName }) {
     const food = {
       name,
       icon: iconFor(name),
@@ -329,8 +329,8 @@ const FoodApi = (() => {
       subtitle: brand || (source === "barcode" ? "Producto" : "Creado por vos"),
       base: { kcal: kcal || 0, protein: protein || 0, carbs: carbs || 0, fat: fat || 0 },
       variants: null,
-      unitGrams: null,
-      unitName: "unidad",
+      unitGrams: unitGrams || null,
+      unitName: unitName || "unidad",
       boneFraction: null,
       peelFraction: null
     };
