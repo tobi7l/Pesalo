@@ -12,8 +12,8 @@ const FoodApi = (() => {
         crudo:  { kcal: 120, protein: 22.5, carbs: 0, fat: 2.6 },
         cocido: { kcal: 165, protein: 31, carbs: 0, fat: 3.6 }
     }},
-    { name: "Huevo entero", base: { kcal: 155, protein: 13, carbs: 1.1, fat: 11 }, unitGrams: 50 },
-    { name: "Banana", base: { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 }, unitGrams: 120 },
+    { name: "Huevo entero", base: { kcal: 155, protein: 13, carbs: 1.1, fat: 11 }, peelFraction: 0.12, unitGrams: 50 },
+    { name: "Banana", base: { kcal: 89, protein: 1.1, carbs: 23, fat: 0.3 }, peelFraction: 0.33, unitGrams: 120 },
     { name: "Manzana roja", base: { kcal: 58, protein: 0.3, carbs: 15.2, fat: 0.2 }, unitGrams: 180 },
     { name: "Manzana verde", base: { kcal: 55, protein: 0.3, carbs: 13.8, fat: 0.2 }, unitGrams: 180 },
     { name: "Frutilla", base: { kcal: 32, protein: 0.7, carbs: 7.7, fat: 0.3 }, unitGrams: 12 },
@@ -34,7 +34,7 @@ const FoodApi = (() => {
     { name: "Pizza muzzarella con provolone", base: { kcal: 275, protein: 12, carbs: 30, fat: 12 }, unitGrams: 150, unitName: "porción" },
     { name: "Yogur natural entero", base: { kcal: 61, protein: 3.5, carbs: 4.7, fat: 3.3 } },
     { name: "Leche descremada", base: { kcal: 35, protein: 3.4, carbs: 5, fat: 0.1 } },
-    { name: "Palta", base: { kcal: 160, protein: 2, carbs: 8.5, fat: 14.7 }, unitGrams: 150 },
+    { name: "Palta", base: { kcal: 160, protein: 2, carbs: 8.5, fat: 14.7 }, peelFraction: 0.26, unitGrams: 150 },
     { name: "Almendras", base: { kcal: 579, protein: 21, carbs: 22, fat: 50 } },
     { name: "Aceite de oliva", base: { kcal: 884, protein: 0, carbs: 0, fat: 100 } },
     { name: "Avena", variants: {
@@ -59,7 +59,7 @@ const FoodApi = (() => {
         crudo:  { kcal: 368, protein: 14, carbs: 64, fat: 6 },
         cocido: { kcal: 120, protein: 4.4, carbs: 21, fat: 1.9 }
     }},
-    { name: "Naranja", base: { kcal: 47, protein: 0.9, carbs: 12, fat: 0.1 }, unitGrams: 130 },
+    { name: "Naranja", base: { kcal: 47, protein: 0.9, carbs: 12, fat: 0.1 }, peelFraction: 0.27, unitGrams: 130 },
     { name: "Tomate", base: { kcal: 18, protein: 0.9, carbs: 3.9, fat: 0.2 } },
     { name: "Zanahoria", base: { kcal: 41, protein: 0.9, carbs: 10, fat: 0.2 } },
     { name: "Merluza", variants: {
@@ -100,17 +100,17 @@ const FoodApi = (() => {
     // Frutas
     { name: "Pera", base: { kcal: 57, protein: 0.4, carbs: 15, fat: 0.1 }, unitGrams: 180 },
     { name: "Durazno", base: { kcal: 39, protein: 0.9, carbs: 10, fat: 0.3 }, unitGrams: 150 },
-    { name: "Mandarina", base: { kcal: 53, protein: 0.8, carbs: 13, fat: 0.3 }, unitGrams: 90 },
-    { name: "Kiwi", base: { kcal: 61, protein: 1.1, carbs: 15, fat: 0.5 }, unitGrams: 75 },
+    { name: "Mandarina", base: { kcal: 53, protein: 0.8, carbs: 13, fat: 0.3 }, peelFraction: 0.26, unitGrams: 90 },
+    { name: "Kiwi", base: { kcal: 61, protein: 1.1, carbs: 15, fat: 0.5 }, peelFraction: 0.14, unitGrams: 75 },
     { name: "Uva", base: { kcal: 69, protein: 0.7, carbs: 18, fat: 0.2 } },
-    { name: "Sandía", base: { kcal: 30, protein: 0.6, carbs: 8, fat: 0.2 } },
-    { name: "Melón", base: { kcal: 34, protein: 0.8, carbs: 8, fat: 0.2 } },
+    { name: "Sandía", base: { kcal: 30, protein: 0.6, carbs: 8, fat: 0.2 }, peelFraction: 0.48 },
+    { name: "Melón", base: { kcal: 34, protein: 0.8, carbs: 8, fat: 0.2 }, peelFraction: 0.49 },
     { name: "Ananá", base: { kcal: 50, protein: 0.5, carbs: 13, fat: 0.1 } },
     { name: "Limón", base: { kcal: 29, protein: 1.1, carbs: 9, fat: 0.3 }, unitGrams: 60 },
-    { name: "Pomelo", base: { kcal: 42, protein: 0.8, carbs: 11, fat: 0.1 }, unitGrams: 250 },
+    { name: "Pomelo", base: { kcal: 42, protein: 0.8, carbs: 11, fat: 0.1 }, peelFraction: 0.5, unitGrams: 250 },
     { name: "Arándanos", base: { kcal: 57, protein: 0.7, carbs: 14, fat: 0.3 } },
     { name: "Cereza", base: { kcal: 63, protein: 1, carbs: 16, fat: 0.2 } },
-    { name: "Mango", base: { kcal: 60, protein: 0.8, carbs: 15, fat: 0.4 } },
+    { name: "Mango", base: { kcal: 60, protein: 0.8, carbs: 15, fat: 0.4 }, peelFraction: 0.29 },
 
     // Verduras
     { name: "Cebolla", base: { kcal: 40, protein: 1.1, carbs: 9.3, fat: 0.1 }, unitGrams: 110 },
@@ -252,11 +252,11 @@ const FoodApi = (() => {
   const ICON_RULES = [
     [/pizza/, "🍕"], [/papas fritas|snack|chizito|palito/, "🍟"],
     [/\bpera\b/, "🍐"], [/\buva\b/, "🍇"], [/durazno|ciruela/, "🍑"], [/mandarina|pomelo/, "🍊"],
-    [/kiwi/, "🥝"], [/sandia/, "🍉"], [/melon/, "🍈"], [/anana/, "🍍"], [/limon/, "🍋"],
+    [/kiwi/, "🥝"], [/sandia/, "🍉"], [/melon/, "🍈"], [/\banana\b/, "🍍"], [/limon/, "🍋"],
     [/mango/, "🥭"], [/arandano/, "🫐"], [/cereza/, "🍒"], [/cebolla/, "🧅"], [/lechuga|espinaca/, "🥬"],
     [/pepino/, "🥒"], [/zapallo/, "🎃"], [/brocoli/, "🥦"], [/morron|pimiento/, "🫑"],
     [/berenjena/, "🍆"], [/choclo|polenta/, "🌽"], [/champi/, "🍄"], [/ricota/, "🧀"],
-    [/galleta|galletita|alfajor|oreo|bizcocho|criollita|vainilla/, "🍪"],
+    [/galleta|galletita|alfajor|oreo|bizcocho|criollita/, "🍪"],
     [/chocolate|bombon|cacao|barra de cereal/, "🍫"],
     [/yerba|\bmate\b/, "🧉"], [/gaseosa|\bcola\b|jugo|bebida|soda|refresco|energizante/, "🥤"],
     [/cerveza/, "🍺"], [/\bvino\b/, "🍷"], [/\bagua\b/, "💧"], [/azucar|edulcorante/, "🍬"],
@@ -264,10 +264,11 @@ const FoodApi = (() => {
     [/helado/, "🍦"], [/sopa|caldo/, "🥣"], [/empanada/, "🥟"], [/hamburguesa/, "🍔"],
     [/\bcafe\b/, "☕"], [/\bte\b|saquito/, "🍵"], [/cereal|granola|muesli/, "🥣"],
     [/manteca|margarina/, "🧈"], [/salchicha|morcilla|mortadela|salame|fiambre|paleta cocida/, "🌭"],
+    [/aceite/, "🫒"],
     [/queso|rallado|reggianito|sardo|cremoso|port salut|danbo|tybo|provolone|mozzarella|muzzarella|ricota|ricotta/, "🧀"],
     [/atun|caballa|sardina|jurel|salmon|surimi|anchoa/, "🐟"],
-    [/\bpure de (papa|batata|zapallo)/, "🥔"], [/yogur|yogurisimo|postre|\bflan\b/, "🥛"], [/mayonesa|ketchup|mostaza|aderezo|salsa|aji/, "🥫"],
-    [/mani|nueces|pistacho|castana|semillas|chia|girasol/, "🥜"], [/aceituna/, "🫒"], [/vinagre|aceto/, "🫙"],
+    [/\bpure de (papa|batata|zapallo)/, "🥔"], [/yogur|yogurisimo|postre|\bflan\b/, "🥛"], [/mayonesa|ketchup|mostaza|aderezo|salsa|\baji\b/, "🥫"],
+    [/\bmani\b|nueces|pistacho|castana|semillas|\bchia\b/, "🥜"], [/aceituna/, "🫒"], [/vinagre|aceto/, "🫙"],
     [/porotos|arvejas|garbanzos/, "🫘"], [/\bsal\b/, "🧂"],
     [/huevo/, "🥚"], [/banana/, "🍌"], [/manzana verde/, "🍏"],
     [/manzana/, "🍎"], [/frutilla/, "🍓"], [/naranja/, "🍊"], [/palta/, "🥑"],
@@ -315,7 +316,8 @@ const FoodApi = (() => {
       variants: f.variants || null,
       unitGrams: f.unitGrams || null,
       unitName: f.unitName || "unidad",
-      boneFraction: f.boneFraction || null
+      boneFraction: f.boneFraction || null,
+      peelFraction: f.peelFraction || null
     };
   }
 
@@ -329,7 +331,8 @@ const FoodApi = (() => {
       variants: null,
       unitGrams: null,
       unitName: "unidad",
-      boneFraction: null
+      boneFraction: null,
+      peelFraction: null
     };
     if (barcode) food.barcode = barcode;
     return food;
@@ -346,21 +349,32 @@ const FoodApi = (() => {
       qty: food.unitGrams ? 1 : 100,
       portion: food.unitGrams ? "unidad" : "gramos",
       variant: food.variants ? "crudo" : null,
-      bone: food.boneFraction ? "con" : null
+      bone: food.boneFraction ? "con" : null,
+      peel: food.peelFraction ? "sin" : null
     };
+  }
+
+  // Parte del peso pesado que no se come (hueso o cascara), segun lo elegido.
+  function wasteFraction(food, sel) {
+    if (food.boneFraction && sel.bone === "con") return food.boneFraction;
+    if (food.peelFraction && sel.peel === "con") return food.peelFraction;
+    return 0;
   }
 
   // Macros por 100 g del peso pesado. Si se peso con hueso, el hueso no aporta
   // nutrientes: se descuenta su fraccion para no sobreestimar.
   function macrosPer100(food, sel) {
     const m = food.variants ? food.variants[sel.variant || "crudo"] : food.base;
-    const factor = food.boneFraction && sel.bone === "con" ? 1 - food.boneFraction : 1;
+    const factor = 1 - wasteFraction(food, sel);
     return { kcal: m.kcal * factor, protein: m.protein * factor, carbs: m.carbs * factor, fat: m.fat * factor };
   }
 
   function gramsOf(food, sel) {
     const qty = Number(sel.qty) || 0;
-    return sel.portion === "unidad" && food.unitGrams ? qty * food.unitGrams : qty;
+    if (sel.portion === "unidad" && food.unitGrams) {
+      return qty * food.unitGrams / (1 - wasteFraction(food, sel));
+    }
+    return qty;
   }
 
   function compute(food, sel) {
@@ -387,6 +401,7 @@ const FoodApi = (() => {
     const q = [];
     if (food.variants) q.push(sel.variant);
     if (food.boneFraction) q.push(sel.bone === "con" ? "con hueso" : "sin hueso");
+    if (food.peelFraction) q.push(sel.peel === "con" ? "con cáscara" : "sin cáscara");
     return q;
   }
 

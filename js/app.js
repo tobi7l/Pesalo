@@ -14,9 +14,9 @@
 
   const SVG_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 7h15M9.500 7V4.800h5V7M6.500 7l.8 12.200h9.400L17.500 7M10 11v5.500M14 11v5.500"/></svg>';
 
-  const PLATE = "\uD83C\uDF7D\uFE0F";
   const $ = (id) => document.getElementById(id);
-  const iconOf = (icon, name) => (icon && icon !== PLATE ? icon : FoodApi.iconFor(name));
+  // El icono se deriva siempre del nombre (asi se corrigen los guardados con reglas viejas).
+  const iconOf = (storedIcon, name) => FoodApi.iconFor(name);
   const mealLabel = (key) => MEALS.find(m => m.key === key).label;
   const fmtInt = (n) => Math.round(n).toLocaleString("es-AR");
   const fmtG = (n) => Number(n).toLocaleString("es-AR", { maximumFractionDigits: n < 10 ? 1 : 0 });
@@ -148,9 +148,22 @@
     return entry.meal || guessMealByTime(new Date(entry.time));
   }
 
+  // Los alimentos genericos guardados antes toman las propiedades nuevas (hueso,
+  // cascara, etc.) de la lista actual, completando lo que falte de la seleccion.
+  function refreshCommon(food, sel) {
+    const out = { food, sel: { ...(sel || FoodApi.defaultSelection(food)) } };
+    if (food.source !== "common") return out;
+    const fresh = FoodApi.findCommon(food.name);
+    if (!fresh) return out;
+    const def = FoodApi.defaultSelection(fresh);
+    ["variant", "bone", "peel"].forEach(k => { if (def[k] && !out.sel[k]) out.sel[k] = def[k]; });
+    out.food = fresh;
+    return out;
+  }
+
   // food + seleccion de una entrada (nueva o del esquema viejo)
   function resolveEntry(entry) {
-    return entry.food ? { food: entry.food, sel: { ...entry.sel } } : resolveLegacyEntry(entry);
+    return entry.food ? refreshCommon(entry.food, entry.sel) : resolveLegacyEntry(entry);
   }
 
   function buildEntryData(food, sel, meal) {
@@ -522,7 +535,8 @@
   }
 
   function openFood(food, sel) {
-    openSheet({ food, sel: { ...(sel || FoodApi.defaultSelection(food)) }, mode: "add" });
+    const r = refreshCommon(food, sel);
+    openSheet({ food: r.food, sel: r.sel, mode: "add" });
   }
 
   function emptyState(text) {
@@ -759,6 +773,7 @@
 
     $("sheetVariantWrap").hidden = !food.variants;
     $("sheetBoneWrap").hidden = !food.boneFraction;
+    $("sheetPeelWrap").hidden = !food.peelFraction;
     $("sheetMeal").value = state.sheet.meal;
 
     syncSheetInputs();
@@ -776,6 +791,7 @@
     $("sheetPortion").value = sel.portion;
     if (sel.variant) $("sheetVariant").value = sel.variant;
     if (sel.bone) $("sheetBone").value = sel.bone;
+    if (sel.peel) $("sheetPeel").value = sel.peel;
   }
 
   function updateSheet() {
@@ -785,6 +801,7 @@
     let data = "Datos por " + FoodApi.qtyLabel(food, sel);
     if (food.variants) data += ` - peso ${sel.variant}`;
     if (food.boneFraction) data += sel.bone === "con" ? ", con hueso" : ", sin hueso";
+    if (food.peelFraction) data += sel.peel === "con" ? ", con cáscara" : ", sin cáscara";
     $("sheetData").textContent = data;
 
     $("stKcal").textContent = fmtInt(calc.kcal);
@@ -868,6 +885,7 @@
 
   $("sheetVariant").addEventListener("change", (e) => { state.sheet.sel.variant = e.target.value; updateSheet(); });
   $("sheetBone").addEventListener("change", (e) => { state.sheet.sel.bone = e.target.value; updateSheet(); });
+  $("sheetPeel").addEventListener("change", (e) => { state.sheet.sel.peel = e.target.value; updateSheet(); });
   $("sheetMeal").addEventListener("change", (e) => { state.sheet.meal = e.target.value; updateSheet(); });
 
   $("sheetFav").addEventListener("click", () => {
