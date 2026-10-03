@@ -178,7 +178,18 @@ svg { display: block; }
 .mc-sub { display: flex; align-items: center; gap: 6px; font-size: 17px; font-weight: 500; color: var(--text-dim); margin-top: 6px; }
 .ic-flame { width: 17px; height: 17px; flex-shrink: 0; }
 .entries { margin-top: 10px; }
-.entry-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.entry-wrap { position: relative; overflow: hidden; }
+.entry-wrap + .entry-wrap { border-top: 1px solid #2c2c2e; }
+.entry-row {
+  position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 0;
+  background: var(--card); touch-action: pan-y; transition: transform .2s ease;
+}
+.er-del {
+  position: absolute; top: 6px; bottom: 6px; right: 0; width: 76px;
+  border: none; border-radius: 18px; background: var(--red); color: #fff;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.er-del svg { width: 24px; height: 24px; }
 .er-main {
   flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px;
   background: none; border: none; padding: 0; color: inherit; text-align: left;
@@ -436,3 +447,22 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   background: #2c2c2e; color: var(--text); padding: 12px 20px; border-radius: 999px; font-size: 16px; font-weight: 600;
   z-index: 100; box-shadow: 0 6px 20px rgba(0,0,0,.5); white-space: nowrap;
 }
+
+/* ---------- Menu del dia y comida reciente ---------- */
+.menu-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.menu-item {
+  height: 56px; border-radius: 999px; border: none; background: var(--card-2);
+  color: var(--text); font-size: 18px; font-weight: 600; padding: 0 20px;
+}
+.menu-item.danger { color: var(--red); }
+.menu-cancel { width: 100%; flex: none; }
+
+.mm-list { max-height: 44vh; overflow-y: auto; margin-bottom: 14px; }
+.mm-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #2c2c2e; }
+.mm-row:last-child { border-bottom: none; }
+.mm-icon { font-size: 26px; width: 34px; text-align: center; flex-shrink: 0; line-height: 1; }
+.mm-name { flex: 1; min-width: 0; font-size: 17px; font-weight: 500; }
+.mm-name small { display: block; font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.mm-right { text-align: right; flex-shrink: 0; font-size: 15px; font-weight: 500; }
+.mm-right span { display: block; color: var(--text-dim); margin-top: 2px; }
+.mm-total { display: flex; justify-content: space-between; font-size: 17px; font-weight: 800; padding: 10px 0 2px; }

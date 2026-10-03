@@ -12,6 +12,8 @@
   const SVG_CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500l4.500 4.500L19 7.500"/></svg>';
   const SVG_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4.500v15M4.500 12h15"/></svg>';
 
+  const SVG_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 7h15M9.500 7V4.800h5V7M6.500 7l.8 12.200h9.400L17.500 7M10 11v5.500M14 11v5.500"/></svg>';
+
   const $ = (id) => document.getElementById(id);
   const mealLabel = (key) => MEALS.find(m => m.key === key).label;
   const fmtInt = (n) => Math.round(n).toLocaleString("es-AR");
@@ -38,7 +40,8 @@
     searchTab: "db",
     showAllRecents: false,
     sheet: null,          // alimento abierto en la hoja de detalle
-    pendingBarcode: null  // codigo escaneado esperando carga manual
+    pendingBarcode: null, // codigo escaneado esperando carga manual
+    mealPreview: null     // comida reciente abierta en el modal
   };
 
   // ---------- Fechas ----------
@@ -65,6 +68,11 @@
   }
 
   const dateKey = (d) => Storage.todayKey(d);
+
+  function parseKey(k) {
+    const [y, m, d] = k.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
 
   // ---------- Datos viejos (esquema anterior) ----------
   const LEGACY_QUALS = new Set(["crudo", "cocido", "con hueso", "sin hueso"]);
@@ -137,6 +145,37 @@
     return entry.meal || guessMealByTime(new Date(entry.time));
   }
 
+  // food + seleccion de una entrada (nueva o del esquema viejo)
+  function resolveEntry(entry) {
+    return entry.food ? { food: entry.food, sel: { ...entry.sel } } : resolveLegacyEntry(entry);
+  }
+
+  function buildEntryData(food, sel, meal) {
+    const calc = FoodApi.compute(food, sel);
+    return {
+      name: food.name,
+      icon: food.icon,
+      qualifiers: FoodApi.qualifiersOf(food, sel),
+      grams: calc.grams,
+      qty: sel.qty,
+      portion: sel.portion,
+      label: FoodApi.qtyLabel(food, sel),
+      kcal: calc.kcal, protein: calc.protein, carbs: calc.carbs, fat: calc.fat,
+      food,
+      sel: { ...sel },
+      meal
+    };
+  }
+
+  function newEntry(data, done) {
+    return {
+      id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+      time: new Date().toISOString(),
+      done: done !== false,
+      ...data
+    };
+  }
+
   // Datos para mostrar una entrada (nueva o del esquema viejo).
   function entryView(e) {
     if (e.food) {
@@ -173,7 +212,6 @@
   $("closeBuscar").addEventListener("click", () => showScreen("hoy"));
   $("editGoalsBtn").addEventListener("click", () => showScreen("ajustes"));
   $("kcalTitleBtn").addEventListener("click", () => showScreen("ajustes"));
-  $("moreGoalsBtn").addEventListener("click", () => showScreen("ajustes"));
   document.querySelectorAll(".sc-macro").forEach(b => b.addEventListener("click", () => showScreen("ajustes")));
 
   // ---------- Plan: tira semanal ----------
@@ -334,30 +372,89 @@
   }
 
   // ---------- Plan: comidas ----------
+  const SWIPE_OPEN = 84;
+
+  function closeSwipes(except) {
+    document.querySelectorAll(".entry-wrap.open").forEach(w => {
+      if (w === except) return;
+      w.classList.remove("open");
+      w.querySelector(".entry-row").style.transform = "";
+    });
+  }
+
+  function attachSwipe(wrap, row) {
+    let sx = 0, sy = 0, base = 0, cur = 0, horiz = null;
+    row.addEventListener("touchstart", (e) => {
+      const t = e.touches[0];
+      sx = t.clientX; sy = t.clientY;
+      base = wrap.classList.contains("open") ? -SWIPE_OPEN : 0;
+      cur = base;
+      horiz = null;
+      row.style.transition = "none";
+    }, { passive: true });
+    row.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      if (horiz === null) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        horiz = Math.abs(dx) > Math.abs(dy);
+        if (horiz) closeSwipes(wrap);
+      }
+      if (!horiz) return;
+      cur = Math.max(-SWIPE_OPEN - 16, Math.min(0, base + dx));
+      row.style.transform = `translateX(${cur}px)`;
+    }, { passive: true });
+    row.addEventListener("touchend", () => {
+      row.style.transition = "";
+      if (!horiz) return;
+      const open = cur < -SWIPE_OPEN / 2;
+      wrap.classList.toggle("open", open);
+      row.style.transform = open ? `translateX(${-SWIPE_OPEN}px)` : "";
+      wrap._swipedAt = Date.now();
+    }, { passive: true });
+  }
+
   function entryRow(entry, dk) {
     const v = entryView(entry);
     const done = entry.done !== false;
-    const row = document.createElement("div");
-    row.className = "entry-row" + (done ? "" : " off");
-    row.innerHTML =
-      `<button class="er-main" type="button">` +
-        `<span class="er-icon">${v.icon}</span>` +
-        `<span class="er-name-wrap"><span class="er-name">${esc(v.name)}</span>` +
-          (v.quals.length ? `<span class="er-qual">${esc(v.quals.join(" · "))}</span>` : "") +
-        `</span>` +
-        `<span class="er-right"><span class="er-qty">${esc(v.label)}</span><span class="er-kcal">${Math.round(entry.kcal)} kcal</span></span>` +
-      `</button>` +
-      `<button class="er-check${done ? " on" : ""}" type="button" aria-label="Marcar como comido">${SVG_CHECK}</button>`;
+    const wrap = document.createElement("div");
+    wrap.className = "entry-wrap";
+    wrap.innerHTML =
+      `<button class="er-del" type="button" aria-label="Eliminar">${SVG_TRASH}</button>` +
+      `<div class="entry-row${done ? "" : " off"}">` +
+        `<button class="er-main" type="button">` +
+          `<span class="er-icon">${v.icon}</span>` +
+          `<span class="er-name-wrap"><span class="er-name">${esc(v.name)}</span>` +
+            (v.quals.length ? `<span class="er-qual">${esc(v.quals.join(" · "))}</span>` : "") +
+          `</span>` +
+          `<span class="er-right"><span class="er-qty">${esc(v.label)}</span><span class="er-kcal">${Math.round(entry.kcal)} kcal</span></span>` +
+        `</button>` +
+        `<button class="er-check${done ? " on" : ""}" type="button" aria-label="Marcar como comido">${SVG_CHECK}</button>` +
+      `</div>`;
 
-    row.querySelector(".er-main").addEventListener("click", () => {
-      const resolved = entry.food ? { food: entry.food, sel: entry.sel } : resolveLegacyEntry(entry);
-      openSheet({ food: resolved.food, sel: { ...resolved.sel }, mode: "edit", entry, dateKey: dk, meal: mealOf(entry) });
-    });
-    row.querySelector(".er-check").addEventListener("click", () => {
+    const row = wrap.querySelector(".entry-row");
+    attachSwipe(wrap, row);
+
+    const guarded = (fn) => () => {
+      if (wrap.classList.contains("open")) { closeSwipes(); return; }
+      if (Date.now() - (wrap._swipedAt || 0) < 350) return;
+      fn();
+    };
+
+    wrap.querySelector(".er-main").addEventListener("click", guarded(() => {
+      const { food, sel } = resolveEntry(entry);
+      openSheet({ food, sel, mode: "edit", entry, dateKey: dk, meal: mealOf(entry) });
+    }));
+    wrap.querySelector(".er-check").addEventListener("click", guarded(() => {
       Storage.updateEntry(dk, entry.id, { ...entry, done: !done });
       renderPlan();
+    }));
+    wrap.querySelector(".er-del").addEventListener("click", () => {
+      Storage.removeEntry(dk, entry.id);
+      renderPlan();
+      showToast("Eliminado");
     });
-    return row;
+    return wrap;
   }
 
   function renderMeals(entries, dk) {
@@ -464,7 +561,6 @@
       const recents = Storage.getRecents();
       if (!recents.length) {
         box.appendChild(emptyState("Todavía no registraste alimentos. Buscá arriba o usá el escáner."));
-        return;
       }
       recents.slice(0, state.showAllRecents ? 30 : 5).forEach(r => {
         box.appendChild(foodRow(r.food, r.sel, () => openFood(r.food, r.sel)));
@@ -477,6 +573,19 @@
         more.addEventListener("click", () => { state.showAllRecents = !state.showAllRecents; renderSearch(); });
         box.appendChild(more);
       }
+
+      const mealsTitle = document.createElement("div");
+      mealsTitle.className = "recent-title";
+      mealsTitle.textContent = "Comidas recientes";
+      box.appendChild(mealsTitle);
+      const meals = recentMeals();
+      if (!meals.length) {
+        const empty = emptyState("No hay comidas recientes");
+        empty.style.padding = "8px 2px 4px";
+        empty.style.textAlign = "left";
+        box.appendChild(empty);
+      }
+      meals.forEach(m => box.appendChild(mealRow(m)));
     } else if (state.searchTab === "favs") {
       const favs = Storage.getFavs();
       if (!favs.length) {
@@ -497,6 +606,120 @@
   });
   document.querySelectorAll("#searchTabs .tab").forEach(t => {
     t.addEventListener("click", () => { state.searchTab = t.dataset.tab; renderSearch(); });
+  });
+
+  // ---------- Comidas recientes (varios alimentos de una misma comida) ----------
+  function recentMeals() {
+    const out = [];
+    const seen = new Set();
+    for (const k of Storage.allLogKeys().reverse()) {
+      const entries = Storage.getLog(k);
+      for (const meal of MEALS) {
+        const list = entries.filter(e => mealOf(e) === meal.key);
+        if (list.length < 2) continue;
+        const signature = list.map(e => entryView(e).name.toLowerCase()).sort().join("|");
+        if (seen.has(signature)) continue;
+        seen.add(signature);
+        out.push({ dateKey: k, meal: meal.key, list });
+        if (out.length >= 6) return out;
+      }
+    }
+    return out;
+  }
+
+  function mealRow(m) {
+    const views = m.list.map(entryView);
+    const total = m.list.reduce((acc, e) => acc + e.kcal, 0);
+    const names = views.slice(0, 2).map(v => v.name).join(", ") + (views.length > 2 ? ` +${views.length - 2}` : "");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "food-row";
+    btn.innerHTML =
+      `<span class="fr-icon">${views[0].icon}</span>` +
+      `<span class="fr-main"><span class="fr-name">${mealLabel(m.meal)} &middot; ${esc(dateLabel(parseKey(m.dateKey)))}</span>` +
+      `<span class="fr-sub">${esc(names)}</span></span>` +
+      `<span class="fr-right"><span class="fr-qty">${m.list.length} alimentos</span><span class="fr-kcal">${fmtInt(total)} kcal</span></span>`;
+    btn.addEventListener("click", () => openMealModal(m));
+    return btn;
+  }
+
+  function openMealModal(m) {
+    state.mealPreview = m;
+    const total = m.list.reduce((acc, e) => acc + e.kcal, 0);
+    $("mealModalTitle").textContent = `${mealLabel(m.meal)} · ${dateLabel(parseKey(m.dateKey))}`;
+    $("mealModalSub").textContent = `${m.list.length} alimentos`;
+    const list = $("mealModalList");
+    list.innerHTML = "";
+    m.list.forEach(e => {
+      const v = entryView(e);
+      const row = document.createElement("div");
+      row.className = "mm-row";
+      row.innerHTML =
+        `<span class="mm-icon">${v.icon}</span>` +
+        `<span class="mm-name">${esc(v.name)}${v.quals.length ? `<small>${esc(v.quals.join(" · "))}</small>` : ""}</span>` +
+        `<span class="mm-right">${esc(v.label)}<span>${Math.round(e.kcal)} kcal</span></span>`;
+      list.appendChild(row);
+    });
+    const totalRow = document.createElement("div");
+    totalRow.className = "mm-total";
+    totalRow.innerHTML = `<span>Total</span><span>${fmtInt(total)} kcal</span>`;
+    list.appendChild(totalRow);
+    $("mealModalAdd").textContent = "Agregar a " + mealLabel(state.selectedMeal || guessMealByTime());
+    $("mealModal").hidden = false;
+  }
+
+  function closeMealModal() {
+    $("mealModal").hidden = true;
+    state.mealPreview = null;
+  }
+
+  $("mealModalCancel").addEventListener("click", closeMealModal);
+  $("mealModal").addEventListener("click", (e) => { if (e.target === $("mealModal")) closeMealModal(); });
+  $("mealModalAdd").addEventListener("click", () => {
+    const m = state.mealPreview;
+    if (!m) return;
+    const target = state.selectedMeal || guessMealByTime();
+    const dk = dateKey(state.currentDate);
+    m.list.forEach(e => {
+      const { food, sel } = resolveEntry(e);
+      const data = buildEntryData(food, sel, target);
+      Storage.addEntry(dk, newEntry(data, e.done));
+      Storage.pushRecent({ food, sel: { ...sel }, label: data.label, kcal: data.kcal, ts: new Date().toISOString() });
+    });
+    closeMealModal();
+    showToast(`${m.list.length} alimentos agregados a ${mealLabel(target)}`);
+    showScreen("hoy");
+  });
+
+  // ---------- Menu del dia (boton "...") ----------
+  function closeDayMenu() { $("dayMenu").hidden = true; }
+
+  $("moreGoalsBtn").addEventListener("click", () => { $("dayMenu").hidden = false; });
+  $("menuCancel").addEventListener("click", closeDayMenu);
+  $("dayMenu").addEventListener("click", (e) => { if (e.target === $("dayMenu")) closeDayMenu(); });
+  $("menuGoals").addEventListener("click", () => { closeDayMenu(); showScreen("ajustes"); });
+
+  $("menuCopyPrev").addEventListener("click", () => {
+    closeDayMenu();
+    const prev = Storage.getLog(dateKey(addDays(state.currentDate, -1)));
+    if (!prev.length) { showToast("El día anterior no tiene comidas"); return; }
+    const dk = dateKey(state.currentDate);
+    prev.forEach(e => {
+      const { food, sel } = resolveEntry(e);
+      Storage.addEntry(dk, newEntry(buildEntryData(food, sel, mealOf(e)), e.done));
+    });
+    renderPlan();
+    showToast(`${prev.length} alimentos copiados`);
+  });
+
+  $("menuClearDay").addEventListener("click", () => {
+    closeDayMenu();
+    const dk = dateKey(state.currentDate);
+    if (!Storage.getLog(dk).length) { showToast("No hay comidas para borrar"); return; }
+    if (!confirm("¿Borrar todas las comidas de este día?")) return;
+    Storage.saveLog(dk, []);
+    renderPlan();
+    showToast("Día borrado");
   });
 
   // ---------- Hoja de detalle del alimento ----------
@@ -628,38 +851,39 @@
 
   $("sheetAdd").addEventListener("click", () => {
     const s = state.sheet;
-    const calc = FoodApi.compute(s.food, s.sel);
-    if (calc.grams <= 0) { showToast("Ingresá una cantidad"); return; }
-
-    const data = {
-      name: s.food.name,
-      icon: s.food.icon,
-      qualifiers: FoodApi.qualifiersOf(s.food, s.sel),
-      grams: calc.grams,
-      qty: s.sel.qty,
-      portion: s.sel.portion,
-      label: FoodApi.qtyLabel(s.food, s.sel),
-      kcal: calc.kcal, protein: calc.protein, carbs: calc.carbs, fat: calc.fat,
-      food: s.food,
-      sel: { ...s.sel },
-      meal: s.meal
-    };
+    if (FoodApi.gramsOf(s.food, s.sel) <= 0) { showToast("Ingresá una cantidad"); return; }
+    const data = buildEntryData(s.food, s.sel, s.meal);
 
     if (s.mode === "edit") {
       Storage.updateEntry(s.dateKey, s.entry.id, { ...s.entry, ...data });
       showToast("Cambios guardados");
     } else {
-      Storage.addEntry(dateKey(state.currentDate), {
-        id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
-        time: new Date().toISOString(),
-        done: true,
-        ...data
-      });
-      Storage.pushRecent({ food: s.food, sel: { ...s.sel }, label: data.label, kcal: calc.kcal, ts: new Date().toISOString() });
+      Storage.addEntry(dateKey(state.currentDate), newEntry(data));
+      Storage.pushRecent({ food: s.food, sel: { ...s.sel }, label: data.label, kcal: data.kcal, ts: new Date().toISOString() });
       showToast("Agregado a " + mealLabel(s.meal));
     }
     closeSheet();
     showScreen("hoy");
+  });
+
+  // ---------- Compartir alimento ----------
+  $("sheetShare").addEventListener("click", async () => {
+    const { food, sel } = state.sheet;
+    const c = FoodApi.compute(food, sel);
+    const text = `${food.name} (${FoodApi.qtyLabel(food, sel)}): ${fmtInt(c.kcal)} kcal · ` +
+      `${fmtG(c.protein)} g proteínas · ${fmtG(c.carbs)} g carbs · ${fmtG(c.fat)} g grasas - Pesalo`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: food.name, text });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        showToast("Copiado al portapapeles");
+      } else {
+        showToast("No se puede compartir desde acá");
+      }
+    } catch (err) {
+      // el usuario cancelo el menu de compartir
+    }
   });
 
   // ---------- Crear alimento ----------
