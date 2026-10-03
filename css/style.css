@@ -482,3 +482,28 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   width: 42px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.3);
 }
 input[type="number"]::placeholder { color: var(--text-dim); opacity: 1; }
+
+/* ---------- Animaciones ---------- */
+@keyframes overlayIn { from { background: rgba(0,0,0,0); } to { background: rgba(0,0,0,.6); } }
+@keyframes overlayOut { from { background: rgba(0,0,0,.6); } to { background: rgba(0,0,0,0); } }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
+
+.sheet-overlay:not([hidden]) { animation: overlayIn .22s ease-out; }
+.sheet-overlay:not([hidden]) .sheet { animation: sheetUp .3s cubic-bezier(.22, .9, .3, 1); }
+.sheet-overlay.closing { animation: overlayOut .2s ease-in forwards; pointer-events: none; }
+.sheet-overlay.closing .sheet { animation: sheetDown .2s ease-in forwards; }
+
+.modal-overlay:not([hidden]) { animation: overlayIn .2s ease-out; }
+.modal-overlay:not([hidden]) .modal-sheet { animation: sheetUp .28s cubic-bezier(.22, .9, .3, 1); }
+
+.screen.active { animation: screenIn .16s ease-out; }
+
+/* Con "Reducir movimiento" activado: sin deslizamientos, solo un fundido corto. */
+@media (prefers-reduced-motion: reduce) {
+  .sheet-overlay:not([hidden]) .sheet,
+  .modal-overlay:not([hidden]) .modal-sheet { animation: screenIn .18s ease-out; }
+  .sheet-overlay.closing .sheet { animation: none; }
+  .gauge-fill, .bar-fill, .entry-row { transition: none; }
+}

@@ -763,6 +763,8 @@
 
     syncSheetInputs();
     updateSheet();
+    clearTimeout(sheetCloseTimer);
+    $("foodSheet").classList.remove("closing");
     resetSheetDrag();
     $("foodSheet").hidden = false;
     $("foodSheet").querySelector(".sheet-scroll").scrollTop = 0;
@@ -827,10 +829,25 @@
     sheet.style.transform = "";
   }
 
-  function closeSheet() {
-    $("foodSheet").hidden = true;
-    state.sheet = null;
+  let sheetCloseTimer = null;
+
+  function finishCloseSheet() {
+    clearTimeout(sheetCloseTimer);
+    const overlay = $("foodSheet");
+    overlay.classList.remove("closing");
+    overlay.hidden = true;
     resetSheetDrag();
+  }
+
+  // Baja con animacion (animate=false la oculta de inmediato).
+  function closeSheet(animate) {
+    const overlay = $("foodSheet");
+    state.sheet = null;
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (animate === false || overlay.hidden || reduce) { finishCloseSheet(); return; }
+    overlay.classList.add("closing");
+    clearTimeout(sheetCloseTimer);
+    sheetCloseTimer = setTimeout(finishCloseSheet, 210);
   }
 
   $("sheetQty").addEventListener("input", (e) => {
@@ -902,7 +919,7 @@
       sheet.style.transition = "transform .2s ease";
       if (dy > 110) {
         sheet.style.transform = "translateY(100%)";
-        setTimeout(closeSheet, 190);
+        setTimeout(() => closeSheet(false), 190);
       } else {
         sheet.style.transform = "";
       }
