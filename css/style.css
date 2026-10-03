@@ -466,3 +466,5 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .mm-right { text-align: right; flex-shrink: 0; font-size: 15px; font-weight: 500; }
 .mm-right span { display: block; color: var(--text-dim); margin-top: 2px; }
 .mm-total { display: flex; justify-content: space-between; font-size: 17px; font-weight: 800; padding: 10px 0 2px; }
+
+.attribution { text-align: center; margin: 4px 0 16px; }

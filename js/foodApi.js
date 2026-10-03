@@ -68,6 +68,67 @@ const FoodApi = (() => {
     }},
     { name: "Jamon cocido", base: { kcal: 145, protein: 21, carbs: 1.5, fat: 6 } },
 
+    // Cereales, harinas y panificados
+    { name: "Arroz integral", variants: {
+        crudo:  { kcal: 362, protein: 7.5, carbs: 76, fat: 2.7 },
+        cocido: { kcal: 123, protein: 2.7, carbs: 26, fat: 1 }
+    }},
+    { name: "Polenta", variants: {
+        crudo:  { kcal: 365, protein: 8, carbs: 77, fat: 1.5 },
+        cocido: { kcal: 70, protein: 1.7, carbs: 15, fat: 0.4 }
+    }},
+    { name: "Harina de trigo 000", base: { kcal: 364, protein: 10, carbs: 76, fat: 1 } },
+    { name: "Pan francés", base: { kcal: 275, protein: 9, carbs: 56, fat: 1.2 }, unitGrams: 60 },
+    { name: "Galletitas de agua", base: { kcal: 430, protein: 10, carbs: 72, fat: 11 }, unitGrams: 8 },
+    { name: "Choclo", base: { kcal: 86, protein: 3.3, carbs: 19, fat: 1.4 } },
+
+    // Azucares, grasas y dulces
+    { name: "Azúcar", base: { kcal: 387, protein: 0, carbs: 100, fat: 0 } },
+    { name: "Aceite de girasol", base: { kcal: 884, protein: 0, carbs: 0, fat: 100 } },
+    { name: "Manteca", base: { kcal: 717, protein: 0.9, carbs: 0.1, fat: 81 } },
+    { name: "Dulce de leche", base: { kcal: 320, protein: 6.5, carbs: 55, fat: 7.5 } },
+    { name: "Mermelada", base: { kcal: 250, protein: 0.4, carbs: 64, fat: 0.1 } },
+    { name: "Miel", base: { kcal: 304, protein: 0.3, carbs: 82, fat: 0 } },
+    { name: "Chocolate con leche", base: { kcal: 535, protein: 7.7, carbs: 59, fat: 30 } },
+
+    // Lacteos
+    { name: "Leche entera", base: { kcal: 61, protein: 3.2, carbs: 4.8, fat: 3.3 } },
+    { name: "Queso muzzarella", base: { kcal: 300, protein: 22, carbs: 2.2, fat: 22 } },
+    { name: "Queso rallado", base: { kcal: 431, protein: 38, carbs: 4, fat: 29 } },
+    { name: "Ricota", base: { kcal: 174, protein: 11, carbs: 3, fat: 13 } },
+
+    // Frutas
+    { name: "Pera", base: { kcal: 57, protein: 0.4, carbs: 15, fat: 0.1 }, unitGrams: 180 },
+    { name: "Durazno", base: { kcal: 39, protein: 0.9, carbs: 10, fat: 0.3 }, unitGrams: 150 },
+    { name: "Mandarina", base: { kcal: 53, protein: 0.8, carbs: 13, fat: 0.3 }, unitGrams: 90 },
+    { name: "Kiwi", base: { kcal: 61, protein: 1.1, carbs: 15, fat: 0.5 }, unitGrams: 75 },
+    { name: "Uva", base: { kcal: 69, protein: 0.7, carbs: 18, fat: 0.2 } },
+    { name: "Sandía", base: { kcal: 30, protein: 0.6, carbs: 8, fat: 0.2 } },
+    { name: "Melón", base: { kcal: 34, protein: 0.8, carbs: 8, fat: 0.2 } },
+    { name: "Ananá", base: { kcal: 50, protein: 0.5, carbs: 13, fat: 0.1 } },
+    { name: "Limón", base: { kcal: 29, protein: 1.1, carbs: 9, fat: 0.3 }, unitGrams: 60 },
+    { name: "Pomelo", base: { kcal: 42, protein: 0.8, carbs: 11, fat: 0.1 }, unitGrams: 250 },
+    { name: "Arándanos", base: { kcal: 57, protein: 0.7, carbs: 14, fat: 0.3 } },
+    { name: "Cereza", base: { kcal: 63, protein: 1, carbs: 16, fat: 0.2 } },
+    { name: "Mango", base: { kcal: 60, protein: 0.8, carbs: 15, fat: 0.4 } },
+
+    // Verduras
+    { name: "Cebolla", base: { kcal: 40, protein: 1.1, carbs: 9.3, fat: 0.1 }, unitGrams: 110 },
+    { name: "Lechuga", base: { kcal: 15, protein: 1.4, carbs: 2.9, fat: 0.2 } },
+    { name: "Pepino", base: { kcal: 15, protein: 0.7, carbs: 3.6, fat: 0.1 } },
+    { name: "Zapallo", base: { kcal: 26, protein: 1, carbs: 6.5, fat: 0.1 } },
+    { name: "Brócoli", base: { kcal: 34, protein: 2.8, carbs: 7, fat: 0.4 } },
+    { name: "Espinaca", base: { kcal: 23, protein: 2.9, carbs: 3.6, fat: 0.4 } },
+    { name: "Morrón", base: { kcal: 31, protein: 1, carbs: 6, fat: 0.3 }, unitGrams: 120 },
+    { name: "Berenjena", base: { kcal: 25, protein: 1, carbs: 6, fat: 0.2 } },
+    { name: "Champiñones", base: { kcal: 22, protein: 3.1, carbs: 3.3, fat: 0.3 } },
+
+    // Bebidas (por 100 ml)
+    { name: "Gaseosa cola", base: { kcal: 42, protein: 0, carbs: 10.6, fat: 0 }, unitGrams: 250, unitName: "vaso" },
+    { name: "Jugo de naranja", base: { kcal: 45, protein: 0.7, carbs: 10, fat: 0.2 }, unitGrams: 250, unitName: "vaso" },
+    { name: "Cerveza", base: { kcal: 43, protein: 0.5, carbs: 3.6, fat: 0 }, unitGrams: 330, unitName: "lata" },
+    { name: "Vino tinto", base: { kcal: 85, protein: 0.1, carbs: 2.6, fat: 0 }, unitGrams: 150, unitName: "copa" },
+
     // Cortes de carne vacuna
     { name: "Asado (costillar)", boneFraction: 0.28, variants: {
         crudo:  { kcal: 250, protein: 17, carbs: 0, fat: 20 },
@@ -189,7 +250,21 @@ const FoodApi = (() => {
   // sel  = { qty, portion: "gramos"|"unidad", variant, bone }
 
   const ICON_RULES = [
-    [/pizza/, "🍕"], [/huevo/, "🥚"], [/banana/, "🍌"], [/manzana verde/, "🍏"],
+    [/pizza/, "🍕"], [/papas fritas|snack|chizito|palito/, "🍟"],
+    [/\bpera\b/, "🍐"], [/\buva\b/, "🍇"], [/durazno|ciruela/, "🍑"], [/mandarina|pomelo/, "🍊"],
+    [/kiwi/, "🥝"], [/sandia/, "🍉"], [/melon/, "🍈"], [/anana/, "🍍"], [/limon/, "🍋"],
+    [/mango/, "🥭"], [/arandano/, "🫐"], [/cereza/, "🍒"], [/cebolla/, "🧅"], [/lechuga|espinaca/, "🥬"],
+    [/pepino/, "🥒"], [/zapallo/, "🎃"], [/brocoli/, "🥦"], [/morron|pimiento/, "🫑"],
+    [/berenjena/, "🍆"], [/choclo|polenta/, "🌽"], [/champi/, "🍄"], [/ricota/, "🧀"],
+    [/galleta|galletita|alfajor|oreo|bizcocho|criollita|vainilla/, "🍪"],
+    [/chocolate|bombon|cacao|barra de cereal/, "🍫"],
+    [/yerba|\bmate\b/, "🧉"], [/gaseosa|\bcola\b|jugo|bebida|soda|refresco|energizante/, "🥤"],
+    [/cerveza/, "🍺"], [/\bvino\b/, "🍷"], [/\bagua\b/, "💧"], [/azucar|edulcorante/, "🍬"],
+    [/harina|premezcla|rebozador|pan rallado/, "🌾"], [/dulce de leche|mermelada|\bmiel\b/, "🍯"],
+    [/helado/, "🍦"], [/sopa|caldo/, "🥣"], [/empanada/, "🥟"], [/hamburguesa/, "🍔"],
+    [/\bcafe\b/, "☕"], [/\bte\b|saquito/, "🍵"], [/cereal|granola|muesli/, "🥣"],
+    [/manteca|margarina/, "🧈"], [/salchicha|morcilla|mortadela|salame|fiambre|paleta cocida/, "🌭"],
+    [/huevo/, "🥚"], [/banana/, "🍌"], [/manzana verde/, "🍏"],
     [/manzana/, "🍎"], [/frutilla/, "🍓"], [/naranja/, "🍊"], [/palta/, "🥑"],
     [/tomate/, "🍅"], [/zanahoria/, "🥕"], [/arroz/, "🍚"], [/fideos/, "🍝"],
     [/papa/, "🥔"], [/batata/, "🍠"], [/pan /, "🍞"], [/avena/, "🥣"],
@@ -206,7 +281,9 @@ const FoodApi = (() => {
     "🍝": "#3b3012", "🥔": "#33291a", "🍠": "#3b2216", "🍞": "#3b2a14", "🥣": "#33291a",
     "🫘": "#33241a", "🌾": "#33301a", "🌰": "#33241a", "🫒": "#26301a", "🧀": "#3b3211",
     "🥛": "#262a30", "🐟": "#14283b", "🍖": "#3b1c14", "🍗": "#3b1d10", "🥩": "#3b1616",
-    "🍕": "#3b2410"
+    "🍕": "#3b2410", "🍪": "#33291a", "🍫": "#2b1c14", "🥤": "#1f2a33", "🍯": "#3b2a0f",
+    "🧉": "#1f3314", "🍟": "#3b3011", "🌭": "#3b1c14", "🍦": "#2f2a33", "🥟": "#33291a",
+    "🍬": "#3b1c2b", "🌾": "#33301a", "🍷": "#33141c", "🍺": "#3b3011", "💧": "#14283b"
   };
 
   function normalize(s) {
@@ -237,12 +314,12 @@ const FoodApi = (() => {
     };
   }
 
-  function makeCustomFood({ name, kcal, protein, carbs, fat, barcode, source }) {
+  function makeCustomFood({ name, kcal, protein, carbs, fat, barcode, source, brand }) {
     const food = {
       name,
-      icon: "🍽️",
+      icon: iconFor(name),
       source: source || "created",
-      subtitle: source === "barcode" ? "Producto" : "Creado por vos",
+      subtitle: brand || (source === "barcode" ? "Producto" : "Creado por vos"),
       base: { kcal: kcal || 0, protein: protein || 0, carbs: carbs || 0, fat: fat || 0 },
       variants: null,
       unitGrams: null,

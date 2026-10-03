@@ -52,9 +52,9 @@ const Barcode = (() => {
 
     const rawName = (data.product.product_name || "").trim() || "Producto escaneado";
     const brand = data.product.brands ? data.product.brands.split(",")[0].trim() : "";
-    const showBrand = brand && !rawName.toLowerCase().includes(brand.toLowerCase());
     return {
-      name: showBrand ? `${rawName} (${brand})` : rawName,
+      name: rawName,
+      brand,
       kcal: kcal || 0,
       protein: protein || 0,
       carbs: carbs || 0,

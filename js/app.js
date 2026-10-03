@@ -545,7 +545,16 @@
 
     if (state.searchTab === "db") {
       if (q) {
-        const results = FoodApi.search(q, Storage.getPersonalFoods());
+        const personal = Storage.getPersonalFoods();
+        const results = FoodApi.search(q, personal);
+        if (Products.isLoaded()) {
+          const owned = new Set(personal.map(f => f.barcode).filter(Boolean));
+          Products.search(q, 40).forEach(f => { if (!owned.has(f.barcode)) results.push(f); });
+        } else {
+          Products.load().then(() => {
+            if (state.searchTab === "db" && $("searchInput").value.trim() === q) renderSearch();
+          });
+        }
         if (!results.length) {
           box.appendChild(emptyState("No encontramos ese alimento. Podés crearlo con los datos de la etiqueta."));
         } else {
@@ -942,6 +951,13 @@
     }
 
     showToast("Buscando producto...");
+    await Products.load();
+    const known = Products.findByBarcode(code);
+    if (known) {
+      openFood(known);
+      return;
+    }
+
     try {
       const product = await Barcode.lookup(code);
       if (product) {
@@ -1056,4 +1072,5 @@
   // ---------- Init ----------
   migrateLegacy();
   renderPlan();
+  setTimeout(() => Products.load(), 1500);
 })();

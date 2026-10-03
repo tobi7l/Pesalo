@@ -1,3 +1,5 @@
 .DS_Store
 Thumbs.db
 __pycache__/
+scripts/off_ar.jsonl
+scripts/off_ar_state.json
