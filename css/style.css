@@ -475,3 +475,10 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   background: #3b2f0a; color: var(--accent); font-size: 15px; font-weight: 600; line-height: 1.3;
 }
 .link-banner button { background: none; border: none; color: var(--accent); font-size: 18px; padding: 0 4px; }
+
+.sheet-scroll { overscroll-behavior: contain; }
+.sheet-hero::before {
+  content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+  width: 42px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.3);
+}
+input[type="number"]::placeholder { color: var(--text-dim); opacity: 1; }

@@ -763,6 +763,7 @@
 
     syncSheetInputs();
     updateSheet();
+    resetSheetDrag();
     $("foodSheet").hidden = false;
     $("foodSheet").querySelector(".sheet-scroll").scrollTop = 0;
   }
@@ -820,9 +821,16 @@
     $("sheetAdd").textContent = mode === "edit" ? "Guardar cambios" : "Agregar a " + mealLabel(meal);
   }
 
+  function resetSheetDrag() {
+    const sheet = document.querySelector("#foodSheet .sheet");
+    sheet.style.transition = "";
+    sheet.style.transform = "";
+  }
+
   function closeSheet() {
     $("foodSheet").hidden = true;
     state.sheet = null;
+    resetSheetDrag();
   }
 
   $("sheetQty").addEventListener("input", (e) => {
@@ -861,6 +869,64 @@
   });
 
   $("sheetClose").addEventListener("click", closeSheet);
+
+  // Deslizar hacia abajo (desde el tope de la hoja) para cerrarla.
+  (function enableSheetSwipeDown() {
+    const sheet = document.querySelector("#foodSheet .sheet");
+    const scroller = sheet.querySelector(".sheet-scroll");
+    let startY = 0, dy = 0, tracking = false, dragging = false;
+
+    sheet.addEventListener("touchstart", (e) => {
+      tracking = !e.target.closest(".sheet-footer") && scroller.scrollTop <= 0;
+      dragging = false;
+      dy = 0;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    sheet.addEventListener("touchmove", (e) => {
+      if (!tracking) return;
+      dy = e.touches[0].clientY - startY;
+      if (!dragging) {
+        if (dy < 8) { if (dy < -8) tracking = false; return; }
+        dragging = true;
+        sheet.style.transition = "none";
+      }
+      e.preventDefault();
+      sheet.style.transform = `translateY(${Math.max(0, dy)}px)`;
+    }, { passive: false });
+
+    sheet.addEventListener("touchend", () => {
+      if (!dragging) return;
+      dragging = false;
+      tracking = false;
+      sheet.style.transition = "transform .2s ease";
+      if (dy > 110) {
+        sheet.style.transform = "translateY(100%)";
+        setTimeout(closeSheet, 190);
+      } else {
+        sheet.style.transform = "";
+      }
+    }, { passive: true });
+  })();
+
+  // Al tocar un campo numerico con valor se vacia (el valor anterior queda en gris):
+  // se escribe directo sin tener que seleccionar y borrar. Si se sale sin escribir, vuelve.
+  document.addEventListener("focusin", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement) || t.type !== "number" || t.value === "") return;
+    t.dataset.prev = t.value;
+    t.dataset.ph = t.placeholder || "";
+    t.placeholder = t.value;
+    t.value = "";
+  });
+  document.addEventListener("focusout", (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement) || t.dataset.prev === undefined) return;
+    if (t.value === "") t.value = t.dataset.prev;
+    t.placeholder = t.dataset.ph;
+    delete t.dataset.prev;
+    delete t.dataset.ph;
+  });
   $("foodSheet").addEventListener("click", (e) => { if (e.target === $("foodSheet")) closeSheet(); });
 
   $("sheetAdd").addEventListener("click", () => {
