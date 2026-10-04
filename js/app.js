@@ -5,7 +5,7 @@
     { key: "merienda", label: "Merienda" },
     { key: "cena", label: "Cena" }
   ];
-  const DAY_LETTERS = ["L", "M", "M", "J", "V", "S", "D"];
+  const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
   const CAL_PER_GRAM = { Protein: 4, Carbs: 4, Fat: 9 };
 
   const SVG_FLAME = '<svg class="ic-flame" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.500 2s.8 3.300-1 5.800C9.800 10 8 11.500 8 14.200c0 .6.100 1.100.3 1.600C7 15 6.300 13.600 6.500 12 5.200 13.500 4.500 15.200 4.500 17c0 3.200 3.200 5 7.500 5s7.500-1.800 7.500-5c0-3.300-2.300-5.200-3.600-7.300-.8.900-1.700 1.200-2.400 1-.1-1.800.2-4-.8-6.400-.3-.8-.7-1.600-1.200-2.300z"/></svg>';
@@ -54,8 +54,8 @@
     return x;
   }
 
-  function mondayOf(d) {
-    return addDays(d, -((d.getDay() + 6) % 7));
+  function sundayOf(d) {
+    return addDays(d, -d.getDay());
   }
 
   function sameDay(a, b) {
@@ -235,9 +235,9 @@
   function renderWeekStrip() {
     const strip = $("weekStrip");
     strip.innerHTML = "";
-    const monday = mondayOf(state.currentDate);
+    const sunday = sundayOf(state.currentDate);
     for (let i = 0; i < 7; i++) {
-      const d = addDays(monday, i);
+      const d = addDays(sunday, i);
       const sel = sameDay(d, state.currentDate);
       const btn = document.createElement("button");
       btn.type = "button";
