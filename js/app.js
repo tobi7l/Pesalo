@@ -510,8 +510,10 @@
     const mini = $("miniSummary");
     const card = $("summaryCard");
     if (!card.offsetParent) { mini.hidden = true; return; }
-    const stripBottom = $("weekStrip").parentElement.getBoundingClientRect().bottom;
-    const covered = stripBottom + MINI_LEAD_PX - card.getBoundingClientRect().top;
+    // Borde inferior de la tira cuando queda fija arriba (no donde esta al inicio, con el titulo encima).
+    const sticky = $("weekStrip").parentElement;
+    const stuckBottom = parseFloat(getComputedStyle(sticky).top) + sticky.offsetHeight;
+    const covered = stuckBottom + MINI_LEAD_PX - card.getBoundingClientRect().top;
     const p = Math.max(0, Math.min(1, covered / MINI_FADE_PX));
     mini.hidden = p <= 0;
     mini.style.opacity = p.toFixed(3);
