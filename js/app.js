@@ -1119,36 +1119,48 @@
   }
 
   // ---------- Ajustes ----------
+  // El % exacto de cada macro vive aca (con decimales): asi los gramos que escribis
+  // vuelven siempre iguales. Los sliders y las etiquetas muestran el % redondeado.
+  const formPct = { Protein: 0, Carbs: 0, Fat: 0 };
+  const MACRO_KEYS = ["Protein", "Carbs", "Fat"];
+
   function loadSettingsIntoForm() {
     const s = state.settings;
     $("goalKcal").value = s.goalKcal;
-    $("sliderProtein").value = s.macroPct.protein;
-    $("sliderCarbs").value = s.macroPct.carbs;
-    $("sliderFat").value = s.macroPct.fat;
+    formPct.Protein = s.macroPct.protein;
+    formPct.Carbs = s.macroPct.carbs;
+    formPct.Fat = s.macroPct.fat;
     refreshMacroUi();
+  }
+
+  function showPct(key) {
+    const slider = $("slider" + key);
+    const rounded = Math.round(formPct[key]);
+    slider.value = Math.max(parseInt(slider.min, 10), Math.min(parseInt(slider.max, 10), rounded));
+    $("pct" + key).textContent = rounded + "%";
   }
 
   // Cada macro es independiente: tocar una no mueve las otras. La suma de %
   // puede dar cualquier cosa (menos o mas de 100%) y no se corrige sola.
   function refreshOneMacro(key) {
     const goal = parseFloat($("goalKcal").value) || 0;
-    const pct = parseInt($("slider" + key).value, 10);
-    $("pct" + key).textContent = pct + "%";
-    $("grams" + key).value = Math.round(goal * pct / 100 / CAL_PER_GRAM[key]);
+    showPct(key);
+    $("grams" + key).value = Math.round(goal * formPct[key] / 100 / CAL_PER_GRAM[key]);
   }
 
   function updateSumHint() {
-    const sum = ["Protein", "Carbs", "Fat"].reduce((acc, key) => acc + parseInt($("slider" + key).value, 10), 0);
-    $("sumHint").textContent = "Suma: " + sum + "%";
+    const sum = MACRO_KEYS.reduce((acc, key) => acc + formPct[key], 0);
+    $("sumHint").textContent = "Suma: " + Math.round(sum) + "%";
   }
 
   function refreshMacroUi() {
-    ["Protein", "Carbs", "Fat"].forEach(refreshOneMacro);
+    MACRO_KEYS.forEach(refreshOneMacro);
     updateSumHint();
   }
 
-  ["Protein", "Carbs", "Fat"].forEach(key => {
+  MACRO_KEYS.forEach(key => {
     $("slider" + key).addEventListener("input", () => {
+      formPct[key] = parseInt($("slider" + key).value, 10);
       refreshOneMacro(key);
       updateSumHint();
     });
@@ -1158,31 +1170,24 @@
   // nueva base), pero no toca los porcentajes que el usuario eligio.
   $("goalKcal").addEventListener("input", refreshMacroUi);
 
-  // Tipear gramos (al salir del campo) solo recalcula el % de ESA macro.
-  ["Protein", "Carbs", "Fat"].forEach(key => {
+  // Tipear gramos (al salir del campo) solo recalcula el % de ESA macro, sin redondearlo.
+  MACRO_KEYS.forEach(key => {
     $("grams" + key).addEventListener("change", () => {
       const goal = parseFloat($("goalKcal").value) || 0;
-      const grams = parseFloat($("grams" + key).value) || 0;
-      const pct = goal > 0 ? Math.round(grams * CAL_PER_GRAM[key] * 100 / goal) : 0;
-      const slider = $("slider" + key);
-      const min = parseInt(slider.min, 10);
-      const max = parseInt(slider.max, 10);
-      slider.value = Math.max(min, Math.min(max, pct));
-      $("pct" + key).textContent = slider.value + "%";
+      const grams = Math.max(0, parseFloat($("grams" + key).value) || 0);
+      formPct[key] = goal > 0 ? grams * CAL_PER_GRAM[key] * 100 / goal : 0;
+      showPct(key);
       updateSumHint();
     });
   });
 
   $("saveSettingsBtn").addEventListener("click", () => {
     const goalKcal = Math.max(0, parseInt($("goalKcal").value, 10) || 2000);
+    const exact = (key) => Math.round(formPct[key] * 10000) / 10000;
 
     state.settings = {
       goalKcal,
-      macroPct: {
-        protein: parseInt($("sliderProtein").value, 10),
-        carbs: parseInt($("sliderCarbs").value, 10),
-        fat: parseInt($("sliderFat").value, 10)
-      }
+      macroPct: { protein: exact("Protein"), carbs: exact("Carbs"), fat: exact("Fat") }
     };
     Storage.saveSettings(state.settings);
     showToast("Ajustes guardados");
