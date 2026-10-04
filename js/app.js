@@ -203,11 +203,36 @@
   }
 
   // ---------- Navegacion ----------
+  // Orden de las pantallas en la barra: define desde que lado entra cada una.
+  const SCREEN_ORDER = { hoy: 0, buscar: 1, ajustes: 2 };
+  let currentScreen = "hoy";
+  let navTimer = null;
+
   function showScreen(name, meal) {
-    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-    $("screen-" + name).classList.add("active");
+    const prev = $("screen-" + currentScreen);
+    const next = $("screen-" + name);
+    const dir = SCREEN_ORDER[name] - SCREEN_ORDER[currentScreen];
+    const y = window.scrollY;
+
+    clearTimeout(navTimer);
+    document.querySelectorAll(".screen").forEach(s => {
+      s.classList.remove("active", "enter-right", "enter-left", "leaving", "leave-left", "leave-right");
+      s.style.top = "";
+    });
+    next.classList.add("active");
+    if (dir !== 0) {
+      // La anterior sigue visible, quieta donde estaba, mientras sale por el lado opuesto.
+      prev.style.top = -y + "px";
+      prev.classList.add("leaving", dir > 0 ? "leave-left" : "leave-right");
+      next.classList.add(dir > 0 ? "enter-right" : "enter-left");
+      navTimer = setTimeout(() => {
+        prev.classList.remove("leaving", "leave-left", "leave-right");
+        prev.style.top = "";
+        next.classList.remove("enter-right", "enter-left");
+      }, 300);
+    }
+    currentScreen = name;
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.screen === name));
-    document.body.classList.toggle("on-search", name === "buscar");
     window.scrollTo(0, 0);
 
     if (name === "buscar") {
