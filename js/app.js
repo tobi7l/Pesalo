@@ -498,12 +498,28 @@
     setMacro("Fat", totals.fat, targets.fatG);
     renderMini(totals, goal, targets);
     renderMeals(entries, dk);
+    updateMiniSummary();
   }
 
-  // El resumen compacto aparece cuando la tarjeta grande sale de pantalla.
-  new IntersectionObserver(([ent]) => {
-    $("miniSummary").hidden = !(!ent.isIntersecting && ent.boundingClientRect.bottom < 120);
-  }, { rootMargin: "-110px 0px 0px 0px", threshold: 0 }).observe($("summaryCard"));
+  // El resumen compacto aparece de a poco desde que la tarjeta grande empieza a
+  // quedar tapada por la tira de dias, y queda completo tras MINI_FADE_PX de scroll.
+  const MINI_FADE_PX = 60;
+  const MINI_LEAD_PX = 24; // empieza un poco antes de que la tarjeta toque la tira
+
+  function updateMiniSummary() {
+    const mini = $("miniSummary");
+    const card = $("summaryCard");
+    if (!card.offsetParent) { mini.hidden = true; return; }
+    const stripBottom = $("weekStrip").parentElement.getBoundingClientRect().bottom;
+    const covered = stripBottom + MINI_LEAD_PX - card.getBoundingClientRect().top;
+    const p = Math.max(0, Math.min(1, covered / MINI_FADE_PX));
+    mini.hidden = p <= 0;
+    mini.style.opacity = p.toFixed(3);
+    mini.style.transform = `translateY(${((p - 1) * 10).toFixed(1)}px)`;
+  }
+
+  window.addEventListener("scroll", updateMiniSummary, { passive: true });
+  window.addEventListener("resize", updateMiniSummary);
 
   // ---------- Buscar ----------
   function foodRow(food, sel, onClick) {
