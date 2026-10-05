@@ -501,10 +501,10 @@
     updateMiniSummary();
   }
 
-  // El resumen compacto aparece de a poco desde que la tarjeta grande empieza a
-  // quedar tapada por la tira de dias, y queda completo tras MINI_FADE_PX de scroll.
-  const MINI_FADE_PX = 70;
-  const MINI_LEAD_PX = -16; // los objetivos entran despues de los dias: la tarjeta ya paso un poco bajo la tira
+  // El resumen compacto aparece de a poco cuando la informacion de la tarjeta grande
+  // (sobre todo los macros, en su parte de abajo) se esta tapando bajo la tira de dias.
+  const MINI_START_PX = 40;  // arranca cuando el borde inferior de la tarjeta esta a este margen de la tira
+  const MINI_FADE_PX = 50;   // y queda completo tras este tramo de scroll
 
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
@@ -527,7 +527,7 @@
     // 2) Despues el panel crece y muestra los objetivos, a medida que la tarjeta grande se tapa.
     //    Borde inferior de la tira ya fija (no donde esta al inicio, con el titulo encima).
     const stuckBottom = stuckTop + sticky.offsetHeight;
-    const p = clamp01((stuckBottom + MINI_LEAD_PX - card.getBoundingClientRect().top) / MINI_FADE_PX);
+    const p = clamp01((stuckBottom + MINI_START_PX - card.getBoundingClientRect().bottom) / MINI_FADE_PX);
     mini.style.visibility = p > 0 ? "visible" : "hidden";
     mini.style.opacity = p.toFixed(3);
     mini.style.clipPath = `inset(0 0 ${((1 - p) * 100).toFixed(1)}% 0)`;
