@@ -502,9 +502,10 @@
     updateMiniSummary();
   }
 
-  // Los objetivos bajan desde detras de la tira de dias, pegados al scroll (1 a 1), cuando
-  // la informacion de la tarjeta grande (sobre todo los macros, abajo) se termina de tapar.
-  const MINI_START_PX = 40;  // arranca cuando el borde inferior de la tarjeta esta a este margen de la tira
+  // Los objetivos bajan desde detras de la tira de dias, pegados al scroll (1 a 1), mientras
+  // los macros de la tarjeta grande se tapan: uno se esconde y el otro baja al mismo ritmo.
+  // La fila de macros de la tarjeta empieza ~88 px sobre su borde inferior.
+  const MINI_START_PX = 90;  // arranca cuando el borde inferior de la tarjeta esta a este margen de la tira
 
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
