@@ -366,11 +366,12 @@
       `<div class="mini-col"><span class="mc-name">${name}</span><span class="mc-val">${val}</span>` +
       `<span class="bar-track"><span class="bar-fill ${cls}" style="width:${Math.min(100, Math.max(0, ratio * 100))}%"></span></span></div>`;
     const ratio = (v, t) => (t > 0 ? v / t : 0);
-    $("miniSummary").innerHTML =
+    $("miniSummary").innerHTML = '<div class="mini-grid">' +
       col("kcal", `${fmtInt(totals.kcal)} / ${fmtInt(goal)}`, ratio(totals.kcal, goal), "kcal") +
       col("Proteínas", `${Math.round(totals.protein)} / ${targets.proteinG} g`, ratio(totals.protein, targets.proteinG), "protein") +
       col("Carbs", `${Math.round(totals.carbs)} / ${targets.carbsG} g`, ratio(totals.carbs, targets.carbsG), "carbs") +
-      col("Grasas", `${Math.round(totals.fat)} / ${targets.fatG} g`, ratio(totals.fat, targets.fatG), "fat");
+      col("Grasas", `${Math.round(totals.fat)} / ${targets.fatG} g`, ratio(totals.fat, targets.fatG), "fat") +
+      "</div>";
   }
 
   // ---------- Plan: comidas ----------
@@ -501,10 +502,9 @@
     updateMiniSummary();
   }
 
-  // El resumen compacto aparece de a poco cuando la informacion de la tarjeta grande
-  // (sobre todo los macros, en su parte de abajo) se esta tapando bajo la tira de dias.
+  // Los objetivos bajan desde detras de la tira de dias, pegados al scroll (1 a 1), cuando
+  // la informacion de la tarjeta grande (sobre todo los macros, abajo) se termina de tapar.
   const MINI_START_PX = 40;  // arranca cuando el borde inferior de la tarjeta esta a este margen de la tira
-  const MINI_FADE_PX = 50;   // y queda completo tras este tramo de scroll
 
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
@@ -524,14 +524,14 @@
     sticky.style.setProperty("--glass", glass.toFixed(3));
     cover.style.opacity = (1 - glass).toFixed(3); // el tapon solido de la barra de estado cede al vidrio
 
-    // 2) Despues el panel crece y muestra los objetivos, a medida que la tarjeta grande se tapa.
+    // 2) Despues el panel crece y los objetivos bajan, tapados por la tira hasta que les toca.
     //    Borde inferior de la tira ya fija (no donde esta al inicio, con el titulo encima).
     const stuckBottom = stuckTop + sticky.offsetHeight;
-    const p = clamp01((stuckBottom + MINI_START_PX - card.getBoundingClientRect().bottom) / MINI_FADE_PX);
-    mini.style.visibility = p > 0 ? "visible" : "hidden";
-    mini.style.opacity = p.toFixed(3);
-    mini.style.clipPath = `inset(0 0 ${((1 - p) * 100).toFixed(1)}% 0)`;
-    sticky.style.setProperty("--ext", (mini.offsetHeight * p).toFixed(1) + "px");
+    const grid = mini.firstElementChild;
+    const h = grid ? grid.offsetHeight : 0;
+    const p = h > 0 ? clamp01((stuckBottom + MINI_START_PX - card.getBoundingClientRect().bottom) / h) : 0;
+    if (grid) grid.style.transform = `translateY(${(-(1 - p) * h).toFixed(1)}px)`;
+    sticky.style.setProperty("--ext", (h * p).toFixed(1) + "px");
   }
 
   window.addEventListener("scroll", updateMiniSummary, { passive: true });

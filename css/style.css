@@ -132,9 +132,12 @@ svg { display: block; }
 
 .mini-summary {
   position: absolute; top: 100%; left: 0; right: 0;
+  height: var(--ext, 0px); overflow: hidden; pointer-events: none;
+}
+.mini-grid {
   padding: 4px 16px 16px;
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-  visibility: hidden; opacity: 0; pointer-events: none;
+  will-change: transform;
 }
 .mini-col { display: flex; flex-direction: column; gap: 4px; text-align: center; }
 .mc-name { font-size: 15px; font-weight: 500; color: var(--text); }
