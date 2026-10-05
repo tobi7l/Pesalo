@@ -99,9 +99,20 @@ svg { display: block; }
 .date-caret .chev { width: 20px; height: 20px; }
 .date-btn input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
+/* Tira de dias fija arriba: al deslizar toma un fondo de vidrio (translucido y borroso),
+   que se extiende hasta el borde de la pantalla y crece hacia abajo cuando aparecen los objetivos. */
 .diary-sticky {
   position: sticky; top: var(--safe-top); z-index: 20;
-  background: var(--bg); padding: 6px 14px 10px;
+  padding: 6px 14px 10px;
+}
+.diary-sticky::before {
+  content: ""; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  top: calc(-1 * var(--safe-top)); bottom: calc(-1 * var(--ext, 0px));
+  background: rgba(28, 28, 30, .58);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6);
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .45);
+  opacity: var(--glass, 0);
 }
 .week-strip { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; touch-action: pan-y; }
 .wd {
@@ -121,11 +132,9 @@ svg { display: block; }
 
 .mini-summary {
   position: absolute; top: 100%; left: 0; right: 0;
-  background: var(--bg);
-  padding: 6px 16px 14px;
+  padding: 4px 16px 16px;
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-  border-radius: 0 0 26px 26px;
-  box-shadow: 0 10px 18px rgba(0,0,0,.7);
+  visibility: hidden; opacity: 0; pointer-events: none;
 }
 .mini-col { display: flex; flex-direction: column; gap: 4px; text-align: center; }
 .mc-name { font-size: 15px; font-weight: 500; color: var(--text); }

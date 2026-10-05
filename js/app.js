@@ -503,21 +503,35 @@
 
   // El resumen compacto aparece de a poco desde que la tarjeta grande empieza a
   // quedar tapada por la tira de dias, y queda completo tras MINI_FADE_PX de scroll.
-  const MINI_FADE_PX = 60;
-  const MINI_LEAD_PX = 24; // empieza un poco antes de que la tarjeta toque la tira
+  const MINI_FADE_PX = 70;
+  const MINI_LEAD_PX = -16; // los objetivos entran despues de los dias: la tarjeta ya paso un poco bajo la tira
+
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
   function updateMiniSummary() {
     const mini = $("miniSummary");
     const card = $("summaryCard");
-    if (!card.offsetParent) { mini.hidden = true; return; }
-    // Borde inferior de la tira cuando queda fija arriba (no donde esta al inicio, con el titulo encima).
+    const cover = document.querySelector(".status-cover");
+    if (!card.offsetParent) { cover.style.opacity = ""; return; }
+
     const sticky = $("weekStrip").parentElement;
-    const stuckBottom = parseFloat(getComputedStyle(sticky).top) + sticky.offsetHeight;
-    const covered = stuckBottom + MINI_LEAD_PX - card.getBoundingClientRect().top;
-    const p = Math.max(0, Math.min(1, covered / MINI_FADE_PX));
-    mini.hidden = p <= 0;
+    const stuckTop = parseFloat(getComputedStyle(sticky).top) || 0;
+
+    // 1) La tira de dias toma el fondo de vidrio justo cuando queda fija arriba
+    //    (el titulo "Hoy" ya salio de pantalla).
+    const headerBottom = document.querySelector(".diary-top").getBoundingClientRect().bottom;
+    const glass = clamp01((stuckTop + 10 - headerBottom) / 16);
+    sticky.style.setProperty("--glass", glass.toFixed(3));
+    cover.style.opacity = (1 - glass).toFixed(3); // el tapon solido de la barra de estado cede al vidrio
+
+    // 2) Despues el panel crece y muestra los objetivos, a medida que la tarjeta grande se tapa.
+    //    Borde inferior de la tira ya fija (no donde esta al inicio, con el titulo encima).
+    const stuckBottom = stuckTop + sticky.offsetHeight;
+    const p = clamp01((stuckBottom + MINI_LEAD_PX - card.getBoundingClientRect().top) / MINI_FADE_PX);
+    mini.style.visibility = p > 0 ? "visible" : "hidden";
     mini.style.opacity = p.toFixed(3);
-    mini.style.transform = `translateY(${((p - 1) * 10).toFixed(1)}px)`;
+    mini.style.clipPath = `inset(0 0 ${((1 - p) * 100).toFixed(1)}% 0)`;
+    sticky.style.setProperty("--ext", (mini.offsetHeight * p).toFixed(1) + "px");
   }
 
   window.addEventListener("scroll", updateMiniSummary, { passive: true });
