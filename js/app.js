@@ -499,7 +499,7 @@
     setMacro("Fat", totals.fat, targets.fatG);
     renderMini(totals, goal, targets);
     renderMeals(entries, dk);
-    updateMiniSummary();
+    measureMiniSummary();
   }
 
   // Los objetivos bajan desde detras de la tira de dias, pegados al scroll (1 a 1), mientras
@@ -509,34 +509,65 @@
 
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
-  function updateMiniSummary() {
-    const mini = $("miniSummary");
-    const card = $("summaryCard");
-    const cover = document.querySelector(".status-cover");
-    if (!card.offsetParent) { cover.style.opacity = ""; return; }
+  // Las medidas del diseno se toman una sola vez (al dibujar el Plan o cambiar el tamano) y no
+  // en cada scroll: leer el diseno mientras se desliza es lo que hacia que se trabara.
+  const mini = { stuckTop: 0, stuckBottom: 0, headerBottom: 0, cardBottom: 0, h: 0, glass: -1, p: -1 };
 
+  function measureMiniSummary() {
+    const card = $("summaryCard");
+    if (!card.offsetParent) return;
     const sticky = $("weekStrip").parentElement;
-    const stuckTop = parseFloat(getComputedStyle(sticky).top) || 0;
+    const grid = $("miniSummary").firstElementChild;
+    const y = window.scrollY;
+    mini.stuckTop = parseFloat(getComputedStyle(sticky).top) || 0;
+    mini.stuckBottom = mini.stuckTop + sticky.offsetHeight;
+    mini.headerBottom = document.querySelector(".diary-top").getBoundingClientRect().bottom + y;
+    mini.cardBottom = card.getBoundingClientRect().bottom + y;
+    mini.h = grid ? grid.offsetHeight : 0;
+    sticky.style.setProperty("--mini-h", mini.h + "px");
+    mini.glass = -1; // fuerza reescribir los estilos con las medidas nuevas
+    mini.p = -1;
+    updateMiniSummary();
+  }
+
+  function updateMiniSummary() {
+    const cover = document.querySelector(".status-cover");
+    if (!$("summaryCard").offsetParent) { cover.style.opacity = ""; return; }
+    const y = window.scrollY;
 
     // 1) La tira de dias toma el fondo de vidrio justo cuando queda fija arriba
     //    (el titulo "Hoy" ya salio de pantalla).
-    const headerBottom = document.querySelector(".diary-top").getBoundingClientRect().bottom;
-    const glass = clamp01((stuckTop + 10 - headerBottom) / 16);
-    sticky.style.setProperty("--glass", glass.toFixed(3));
-    cover.style.opacity = (1 - glass).toFixed(3); // el tapon solido de la barra de estado cede al vidrio
+    const glass = Math.round(clamp01((mini.stuckTop + 10 - (mini.headerBottom - y)) / 16) * 100) / 100;
+    // 2) Despues el vidrio baja con los objetivos, tapados por la tira hasta que les toca.
+    const p = mini.h > 0
+      ? Math.round(clamp01((mini.stuckBottom + MINI_START_PX - (mini.cardBottom - y)) / mini.h) * 200) / 200
+      : 0;
 
-    // 2) Despues el panel crece y los objetivos bajan, tapados por la tira hasta que les toca.
-    //    Borde inferior de la tira ya fija (no donde esta al inicio, con el titulo encima).
-    const stuckBottom = stuckTop + sticky.offsetHeight;
-    const grid = mini.firstElementChild;
-    const h = grid ? grid.offsetHeight : 0;
-    const p = h > 0 ? clamp01((stuckBottom + MINI_START_PX - card.getBoundingClientRect().bottom) / h) : 0;
-    if (grid) grid.style.transform = `translateY(${(-(1 - p) * h).toFixed(1)}px)`;
-    sticky.style.setProperty("--ext", (h * p).toFixed(1) + "px");
+    if (glass !== mini.glass) {
+      mini.glass = glass;
+      $("diaryGlass").style.opacity = glass;
+      cover.style.opacity = 1 - glass; // el tapon solido de la barra de estado cede al vidrio
+    }
+    if (p !== mini.p) {
+      mini.p = p;
+      const shift = `translate3d(0, ${(-(1 - p) * mini.h).toFixed(1)}px, 0)`;
+      $("diaryGlass").style.transform = shift;
+      const grid = $("miniSummary").firstElementChild;
+      if (grid) grid.style.transform = shift;
+    }
   }
 
   window.addEventListener("scroll", updateMiniSummary, { passive: true });
-  window.addEventListener("resize", updateMiniSummary);
+  window.addEventListener("resize", measureMiniSummary);
+  window.addEventListener("load", measureMiniSummary);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureMiniSummary);
+  // Si cambia el tamano de la tarjeta o del encabezado (fuentes, textos), se vuelve a medir sola.
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(measureMiniSummary);
+    ro.observe($("summaryCard"));
+    ro.observe(document.querySelector(".diary-top"));
+    ro.observe($("weekStrip").parentElement);
+  }
 
   // ---------- Buscar ----------
   function foodRow(food, sel, onClick) {
