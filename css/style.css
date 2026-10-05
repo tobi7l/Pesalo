@@ -147,6 +147,33 @@ svg { display: block; }
 .mc-val { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; }
 .mini-col .bar-track { height: 5px; }
 
+/* Si el navegador soporta animaciones ligadas al scroll, el vidrio y los objetivos las anima el
+   propio navegador (igual que la tira de dias, sin escalones). JS solo fija los tramos (--g0.., --m0..).
+   Sin soporte queda el movimiento hecho desde JS. */
+@keyframes glassFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes coverFade { from { opacity: 1; } to { opacity: 0; } }
+@keyframes miniShift {
+  from { transform: translate3d(0, calc(-1 * var(--mini-h, 0px)), 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+@supports (animation-timeline: scroll()) {
+  .diary-glass {
+    animation: glassFade linear both, miniShift linear both;
+    animation-timeline: scroll(root), scroll(root);
+    animation-range: var(--g0, 0px) var(--g1, 1px), var(--m0, 0px) var(--m1, 1px);
+  }
+  .mini-grid {
+    animation: miniShift linear both;
+    animation-timeline: scroll(root);
+    animation-range: var(--m0, 0px) var(--m1, 1px);
+  }
+  body[data-screen="hoy"] .status-cover {
+    animation: coverFade linear both;
+    animation-timeline: scroll(root);
+    animation-range: var(--g0, 0px) var(--g1, 1px);
+  }
+}
+
 /* ---------- Plan: tarjeta resumen ---------- */
 .summary-card {
   background: var(--card); border-radius: 32px;

@@ -232,6 +232,7 @@
       }, 300);
     }
     currentScreen = name;
+    document.body.dataset.screen = name;
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.screen === name));
     window.scrollTo(0, 0);
 
@@ -511,6 +512,7 @@
 
   // Las medidas del diseno se toman una sola vez (al dibujar el Plan o cambiar el tamano) y no
   // en cada scroll: leer el diseno mientras se desliza es lo que hacia que se trabara.
+  const NATIVE_SCROLL_ANIM = !!(window.CSS && CSS.supports && CSS.supports("animation-timeline: scroll()"));
   const mini = { stuckTop: 0, stuckBottom: 0, headerBottom: 0, cardBottom: 0, h: 0, glass: -1, p: -1 };
 
   function measureMiniSummary() {
@@ -525,23 +527,32 @@
     mini.cardBottom = card.getBoundingClientRect().bottom + y;
     mini.h = grid ? grid.offsetHeight : 0;
     sticky.style.setProperty("--mini-h", mini.h + "px");
+
+    // Tramos de scroll (en px desde arriba) donde ocurre cada animacion.
+    const g0 = Math.max(0, mini.headerBottom - mini.stuckTop - 10);
+    const m0 = Math.max(0, mini.cardBottom - mini.stuckBottom - MINI_START_PX);
+    const root = document.documentElement.style;
+    root.setProperty("--g0", g0 + "px");
+    root.setProperty("--g1", g0 + 16 + "px");
+    root.setProperty("--m0", m0 + "px");
+    root.setProperty("--m1", m0 + Math.max(1, mini.h) + "px");
+
     mini.glass = -1; // fuerza reescribir los estilos con las medidas nuevas
     mini.p = -1;
     updateMiniSummary();
   }
 
   function updateMiniSummary() {
+    if (NATIVE_SCROLL_ANIM) return; // lo anima el navegador
     const cover = document.querySelector(".status-cover");
     if (!$("summaryCard").offsetParent) { cover.style.opacity = ""; return; }
     const y = window.scrollY;
 
     // 1) La tira de dias toma el fondo de vidrio justo cuando queda fija arriba
     //    (el titulo "Hoy" ya salio de pantalla).
-    const glass = Math.round(clamp01((mini.stuckTop + 10 - (mini.headerBottom - y)) / 16) * 100) / 100;
+    const glass = clamp01((mini.stuckTop + 10 - (mini.headerBottom - y)) / 16);
     // 2) Despues el vidrio baja con los objetivos, tapados por la tira hasta que les toca.
-    const p = mini.h > 0
-      ? Math.round(clamp01((mini.stuckBottom + MINI_START_PX - (mini.cardBottom - y)) / mini.h) * 200) / 200
-      : 0;
+    const p = mini.h > 0 ? clamp01((mini.stuckBottom + MINI_START_PX - (mini.cardBottom - y)) / mini.h) : 0;
 
     if (glass !== mini.glass) {
       mini.glass = glass;
@@ -550,7 +561,7 @@
     }
     if (p !== mini.p) {
       mini.p = p;
-      const shift = `translate3d(0, ${(-(1 - p) * mini.h).toFixed(1)}px, 0)`;
+      const shift = `translate3d(0, ${(-(1 - p) * mini.h).toFixed(2)}px, 0)`;
       $("diaryGlass").style.transform = shift;
       const grid = $("miniSummary").firstElementChild;
       if (grid) grid.style.transform = shift;
@@ -560,6 +571,9 @@
   window.addEventListener("scroll", updateMiniSummary, { passive: true });
   window.addEventListener("resize", measureMiniSummary);
   window.addEventListener("load", measureMiniSummary);
+  window.addEventListener("pageshow", measureMiniSummary);
+  window.addEventListener("orientationchange", () => setTimeout(measureMiniSummary, 300));
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", measureMiniSummary);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureMiniSummary);
   // Si cambia el tamano de la tarjeta o del encabezado (fuentes, textos), se vuelve a medir sola.
   if (window.ResizeObserver) {
