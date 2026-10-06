@@ -12,6 +12,149 @@
    3.6,
    33,
    "feta"
+  ],
+  [
+   "",
+   "Queso cremoso",
+   "Punta del Agua",
+   303,
+   17.3,
+   2.0,
+   25.0,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso port salut clásico",
+   "Punta del Agua",
+   293,
+   17.3,
+   3.3,
+   23.7,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso port salut light",
+   "Punta del Agua",
+   257,
+   20.3,
+   1.7,
+   18.7,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso sardo",
+   "Punta del Agua",
+   387,
+   30.7,
+   2.7,
+   28.0,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso reggianito",
+   "Punta del Agua",
+   397,
+   30.7,
+   1.0,
+   30.0,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso danbo",
+   "Punta del Agua",
+   347,
+   24.3,
+   0.0,
+   27.7,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso mozzarella",
+   "Punta del Agua",
+   330,
+   22.0,
+   1.0,
+   26.7,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso gouda",
+   "Punta del Agua",
+   307,
+   20.7,
+   1.7,
+   24.3,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso tybo",
+   "Punta del Agua",
+   350,
+   24.0,
+   2.0,
+   27.3,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Queso fynbo",
+   "Punta del Agua",
+   337,
+   24.0,
+   2.0,
+   25.7,
+   30,
+   "rebanada"
+  ],
+  [
+   "",
+   "Manteca",
+   "Punta del Agua",
+   750,
+   0.0,
+   0.0,
+   84.0,
+   10,
+   "cucharada"
+  ],
+  [
+   "",
+   "Dulce de leche familiar",
+   "Punta del Agua",
+   330,
+   6.0,
+   60.0,
+   7.0,
+   20,
+   "cucharada"
+  ],
+  [
+   "",
+   "Crema de leche pasteurizada",
+   "Punta del Agua",
+   360,
+   0.0,
+   0.0,
+   40.0,
+   15,
+   "cucharada"
   ]
  ]
 }
