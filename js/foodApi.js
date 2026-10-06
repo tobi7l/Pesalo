@@ -62,15 +62,63 @@ const FoodApi = (() => {
     { name: "Naranja", base: { kcal: 47, protein: 0.9, carbs: 12, fat: 0.1 }, peelFraction: 0.27, unitGrams: 130 },
     { name: "Tomate", base: { kcal: 18, protein: 0.9, carbs: 3.9, fat: 0.2 } },
     { name: "Zanahoria", base: { kcal: 41, protein: 0.9, carbs: 10, fat: 0.2 } },
-    { name: "Merluza", variants: {
+    { name: "Merluza", subtitle: "Pescado de mar", tags: "pescado", variants: {
         crudo:  { kcal: 71, protein: 17, carbs: 0, fat: 0.6 },
         cocido: { kcal: 90, protein: 18, carbs: 0, fat: 1.3 }
     }},
     // Atun fresco (aleta amarilla, el que se vende en pescaderias). Fuente: USDA FoodData Central.
-    { name: "Atun fresco", variants: {
+    { name: "Atun fresco", subtitle: "Pescado de mar", tags: "pescado", variants: {
         crudo:  { kcal: 109, protein: 24.4, carbs: 0, fat: 0.5 },
         cocido: { kcal: 139, protein: 29.1, carbs: 0, fat: 1.3 }
     }},
+    // Pescados y mariscos. Valores por 100 g CRUDOS. Fuente: ARGENFOODS (Universidad Nacional de Lujan),
+    // salvo salmon blanco (CONICET: proteina 18,3 g, grasa ~0,7 g) y salmon rosado / trucha (USDA, de cultivo).
+    { name: "Abadejo", base: { kcal: 72, protein: 15.8, carbs: 0, fat: 0.9 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Brótola", base: { kcal: 83, protein: 17.6, carbs: 0, fat: 1.2 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Caballa", base: { kcal: 232, protein: 22.0, carbs: 0, fat: 15.8 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Pez gallo", base: { kcal: 84, protein: 20.2, carbs: 0, fat: 0.4 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Pejerrey de mar", base: { kcal: 86, protein: 18.6, carbs: 0, fat: 1.2 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Corvina blanca", base: { kcal: 97, protein: 19.5, carbs: 0, fat: 1.9 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Corvina negra", base: { kcal: 84, protein: 18.8, carbs: 0, fat: 0.8 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Besugo", base: { kcal: 100, protein: 20.4, carbs: 0, fat: 2.0 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Congrio", base: { kcal: 107, protein: 17.2, carbs: 0, fat: 4.0 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Lenguado", base: { kcal: 78, protein: 17.5, carbs: 0, fat: 0.8 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Mero", base: { kcal: 83, protein: 17.9, carbs: 0, fat: 1.0 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Pargo", base: { kcal: 113, protein: 19.1, carbs: 0, fat: 3.9 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Pescadilla", base: { kcal: 97, protein: 17.8, carbs: 0, fat: 2.8 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Jurel", base: { kcal: 149, protein: 19.0, carbs: 0, fat: 8.0 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Anchoíta", base: { kcal: 129, protein: 19.2, carbs: 0, fat: 5.4 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Anchoa de banco", base: { kcal: 92, protein: 21.5, carbs: 0, fat: 0.4 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Bonito", base: { kcal: 219, protein: 22.0, carbs: 0, fat: 14.5 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Palometa", base: { kcal: 215, protein: 20.1, carbs: 0, fat: 14.8 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Castañeta", base: { kcal: 95, protein: 18.4, carbs: 0, fat: 2.3 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Testolín", base: { kcal: 98, protein: 18.9, carbs: 0, fat: 2.4 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Gatuso", base: { kcal: 72, protein: 17.4, carbs: 0, fat: 0.2 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Rubio", base: { kcal: 109, protein: 17.1, carbs: 0, fat: 4.5 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Lisa", base: { kcal: 146, protein: 17.9, carbs: 0, fat: 7.8 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Salmón blanco", base: { kcal: 80, protein: 18.3, carbs: 0, fat: 0.7 }, subtitle: "Pescado de mar · crudo", tags: "pescado" },
+    { name: "Surubí", base: { kcal: 110, protein: 18.2, carbs: 0, fat: 4.0 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Dorado", base: { kcal: 80, protein: 18.8, carbs: 0, fat: 0.5 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Sábalo", base: { kcal: 145, protein: 18.0, carbs: 0, fat: 8.1 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Patí", base: { kcal: 90, protein: 18.2, carbs: 0, fat: 1.8 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Pejerrey de agua dulce", base: { kcal: 77, protein: 18.3, carbs: 0, fat: 0.4 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Tararira", base: { kcal: 79, protein: 18.1, carbs: 0, fat: 0.6 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Amarillo", base: { kcal: 141, protein: 17.3, carbs: 0, fat: 8.0 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Armado", base: { kcal: 75, protein: 15.4, carbs: 0, fat: 1.5 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Moncholo", base: { kcal: 112, protein: 17.5, carbs: 0, fat: 4.7 }, subtitle: "Pescado de río · crudo", tags: "pescado" },
+    { name: "Salmón rosado", subtitle: "Pescado · de cultivo", tags: "pescado", variants: {
+        crudo:  { kcal: 208, protein: 20.4, carbs: 0, fat: 13.4 },
+        cocido: { kcal: 206, protein: 22.1, carbs: 0, fat: 12.4 }
+    }},
+    { name: "Trucha", subtitle: "Pescado de río · de cultivo", tags: "pescado", variants: {
+        crudo:  { kcal: 141, protein: 19.9, carbs: 0, fat: 6.2 },
+        cocido: { kcal: 168, protein: 23.8, carbs: 0, fat: 7.2 }
+    }},
+    { name: "Calamar", base: { kcal: 79, protein: 18.4, carbs: 0, fat: 0.6 }, subtitle: "Marisco · crudo", tags: "marisco" },
+    { name: "Camarón", base: { kcal: 91, protein: 21.0, carbs: 0, fat: 0.8 }, subtitle: "Marisco · crudo", tags: "marisco" },
+    { name: "Langostino", base: { kcal: 97, protein: 22.0, carbs: 0, fat: 0.9 }, subtitle: "Marisco · crudo", tags: "marisco" },
+    { name: "Mejillón", base: { kcal: 64, protein: 11.9, carbs: 1.7, fat: 1.1 }, subtitle: "Marisco · crudo", tags: "marisco" },
+    { name: "Centolla", base: { kcal: 66, protein: 13.9, carbs: 0, fat: 1.1 }, subtitle: "Marisco · crudo", tags: "marisco" },
     { name: "Jamon cocido", base: { kcal: 145, protein: 21, carbs: 1.5, fat: 6 } },
 
     // Cereales, harinas y panificados
@@ -255,6 +303,8 @@ const FoodApi = (() => {
   // sel  = { qty, portion: "gramos"|"unidad", variant, bone }
 
   const ICON_RULES = [
+    [/\b(atun|abadejo|brotola|caballa|pez gallo|pejerrey|corvina|besugo|congrio|lenguado|pargo|pescadilla|jurel|anchoita|anchoa|bonito|palometa|castaneta|testolin|gatuso|salmon|trucha|surubi|sabalo|tararira|moncholo|merluza|sardina|surimi)\b|^(amarillo|armado|dorado|lisa|mero|pati|rubio)\b/, "🐟"],
+    [/camaron|langostino/, "🦐"], [/calamar/, "🦑"], [/centolla/, "🦀"], [/mejillon/, "🦪"],
     [/pizza/, "🍕"], [/papas fritas|snack|chizito|palito/, "🍟"],
     [/\bpera\b/, "🍐"], [/\buva\b/, "🍇"], [/durazno|ciruela/, "🍑"], [/mandarina|pomelo/, "🍊"],
     [/kiwi/, "🥝"], [/sandia/, "🍉"], [/melon/, "🍈"], [/\banana\b/, "🍍"], [/limon/, "🍋"],
@@ -294,7 +344,7 @@ const FoodApi = (() => {
     "🥛": "#262a30", "🐟": "#14283b", "🍖": "#3b1c14", "🍗": "#3b1d10", "🥩": "#3b1616",
     "🍕": "#3b2410", "🍪": "#33291a", "🍫": "#2b1c14", "🥤": "#1f2a33", "🍯": "#3b2a0f",
     "🧉": "#1f3314", "🍟": "#3b3011", "🌭": "#3b1c14", "🍦": "#2f2a33", "🥟": "#33291a",
-    "🧀": "#3b3211", "🥫": "#3b1612", "🥜": "#33241a", "🫙": "#26301a", "🧂": "#2c2c2e", "🍬": "#3b1c2b", "🌾": "#33301a", "🍷": "#33141c", "🍺": "#3b3011", "💧": "#14283b"
+    "🧀": "#3b3211", "🥫": "#3b1612", "🥜": "#33241a", "🫙": "#26301a", "🧂": "#2c2c2e", "🍬": "#3b1c2b", "🌾": "#33301a", "🍷": "#33141c", "🦐": "#3b1c14", "🦑": "#2c2433", "🦀": "#3b1614", "🦪": "#1f2a33", "🍺": "#3b3011", "💧": "#14283b"
   };
 
   function normalize(s) {
@@ -316,7 +366,7 @@ const FoodApi = (() => {
       name: f.name,
       icon: iconFor(f.name),
       source: "common",
-      subtitle: "Genérico",
+      subtitle: f.subtitle || "Genérico",
       base: f.base || null,
       variants: f.variants || null,
       unitGrams: f.unitGrams || null,
@@ -413,7 +463,7 @@ const FoodApi = (() => {
   function searchCommon(query) {
     const q = normalize(query);
     if (!q) return [];
-    return COMMON_FOODS.filter(f => normalize(f.name).includes(q)).map(toFood);
+    return COMMON_FOODS.filter(f => normalize(f.name + " " + (f.tags || "")).includes(q)).map(toFood);
   }
 
   // personalFoods: alimentos creados / escaneados por el usuario. Tienen prioridad
