@@ -66,6 +66,11 @@ const FoodApi = (() => {
         crudo:  { kcal: 71, protein: 17, carbs: 0, fat: 0.6 },
         cocido: { kcal: 90, protein: 18, carbs: 0, fat: 1.3 }
     }},
+    // Atun fresco (aleta amarilla, el que se vende en pescaderias). Fuente: USDA FoodData Central.
+    { name: "Atun fresco", variants: {
+        crudo:  { kcal: 109, protein: 24.4, carbs: 0, fat: 0.5 },
+        cocido: { kcal: 139, protein: 29.1, carbs: 0, fat: 1.3 }
+    }},
     { name: "Jamon cocido", base: { kcal: 145, protein: 21, carbs: 1.5, fat: 6 } },
 
     // Cereales, harinas y panificados
