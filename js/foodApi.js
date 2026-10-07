@@ -323,7 +323,7 @@ const FoodApi = (() => {
     [/queso|rallado|reggianito|sardo|cremoso|port salut|danbo|tybo|provolone|mozzarella|muzzarella|ricota|ricotta/, "🧀"],
     [/atun|caballa|sardina|jurel|salmon|surimi|anchoa/, "🐟"],
     [/\bpure de (papa|batata|zapallo)/, "🥔"], [/yogur|yogurisimo|postre|\bflan\b/, "🥛"], [/mayonesa|ketchup|mostaza|aderezo|salsa|\baji\b/, "🥫"],
-    [/\bmani\b|nueces|pistacho|castana|semillas|\bchia\b/, "🥜"], [/aceituna/, "🫒"], [/vinagre|aceto/, "🫙"],
+    [/\bmani\b|nueces|pistacho|castana|semillas|pipas|\bchia\b/, "🥜"], [/aceituna/, "🫒"], [/vinagre|aceto/, "🫙"],
     [/porotos|arvejas|garbanzos/, "🫘"], [/\bsal\b/, "🧂"],
     [/huevo/, "🥚"], [/banana/, "🍌"], [/manzana verde/, "🍏"],
     [/manzana/, "🍎"], [/frutilla/, "🍓"], [/naranja/, "🍊"], [/palta/, "🥑"],
@@ -352,7 +352,7 @@ const FoodApi = (() => {
   }
 
   function iconFor(name) {
-    const n = normalize(name);
+    const n = normalize(name).replace(/\bsin sal\b/g, " "); // "sin sal" no es el salero
     const rule = ICON_RULES.find(([re]) => re.test(n));
     return rule ? rule[1] : "🍽️";
   }

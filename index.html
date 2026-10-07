@@ -214,7 +214,7 @@
 
       <div class="sheet-footer">
         <div class="sf-fields">
-          <label class="sf-field sf-qty"><span>Cantidad</span><input type="number" id="sheetQty" inputmode="decimal" min="0" step="any"></label>
+          <label class="sf-field sf-qty"><span>Cantidad</span><input type="text" id="sheetQty" class="num-text" inputmode="decimal"></label>
           <label class="sf-field sf-portion"><span>Porci&oacute;n</span><select id="sheetPortion"></select></label>
           <label class="sf-field sf-variant" id="sheetVariantWrap" hidden><span>Tipo de Peso</span>
             <select id="sheetVariant"><option value="crudo">Crudo</option><option value="cocido">Cocido</option></select>
@@ -287,14 +287,18 @@
     <div class="modal-sheet">
       <div class="modal-handle"></div>
       <h3>Crear alimento</h3>
-      <p class="modal-hint" id="manualHint">Valores por cada 100 g del alimento</p>
-      <label class="field"><span>Nombre</span><input type="text" id="manName" placeholder="Ej: Milanesa casera"></label>
+      <p class="modal-hint" id="manualHint">Copiá los valores tal como figuran en el envase</p>
+      <label class="field"><span>Nombre</span><input type="text" id="manName" placeholder="Ej: Pipas peladas sin sal"></label>
+      <label class="field"><span>Los valores del envase son por</span>
+        <div class="unit-input"><input type="text" id="manServing" class="num-text" inputmode="decimal" value="100"><span class="unit-label">g o ml</span></div>
+      </label>
       <div class="field-grid">
-        <label class="field"><span>Kcal /100g</span><input type="number" id="manKcal" inputmode="decimal"></label>
-        <label class="field"><span>Prot /100g</span><input type="number" id="manProtein" inputmode="decimal"></label>
-        <label class="field"><span>Carb /100g</span><input type="number" id="manCarbs" inputmode="decimal"></label>
-        <label class="field"><span>Grasa /100g</span><input type="number" id="manFat" inputmode="decimal"></label>
+        <label class="field"><span>Calorías (kcal)</span><input type="text" id="manKcal" class="num-text" inputmode="decimal"></label>
+        <label class="field"><span>Proteínas (g)</span><input type="text" id="manProtein" class="num-text" inputmode="decimal"></label>
+        <label class="field"><span>Carbohidratos (g)</span><input type="text" id="manCarbs" class="num-text" inputmode="decimal"></label>
+        <label class="field"><span>Grasas (g)</span><input type="text" id="manFat" class="num-text" inputmode="decimal"></label>
       </div>
+      <p class="modal-hint man-preview" id="manPreview" hidden></p>
       <div class="modal-actions">
         <button id="manualCancel" class="btn-secondary">Cancelar</button>
         <button id="manualNext" class="btn-primary">Crear</button>

@@ -19,6 +19,11 @@
   const iconOf = (storedIcon, name) => FoodApi.iconFor(name);
   const mealLabel = (key) => MEALS.find(m => m.key === key).label;
   const fmtInt = (n) => Math.round(n).toLocaleString("es-AR");
+  // Acepta "3,7" y "3.7" (el teclado argentino escribe coma).
+  const parseNum = (str) => {
+    const n = parseFloat(String(str).trim().replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
   const fmtG = (n) => Number(n).toLocaleString("es-AR", { maximumFractionDigits: n < 10 ? 1 : 0 });
 
   function esc(str) {
@@ -850,7 +855,7 @@
 
   function syncSheetInputs() {
     const { sel } = state.sheet;
-    $("sheetQty").value = sel.qty;
+    $("sheetQty").value = String(sel.qty).replace(".", ",");
     $("sheetPortion").value = sel.portion;
     if (sel.variant) $("sheetVariant").value = sel.variant;
     if (sel.bone) $("sheetBone").value = sel.bone;
@@ -931,7 +936,7 @@
   }
 
   $("sheetQty").addEventListener("input", (e) => {
-    state.sheet.sel.qty = parseFloat(e.target.value) || 0;
+    state.sheet.sel.qty = parseNum(e.target.value);
     updateSheet();
   });
 
@@ -1011,7 +1016,7 @@
   // se escribe directo sin tener que seleccionar y borrar. Si se sale sin escribir, vuelve.
   document.addEventListener("focusin", (e) => {
     const t = e.target;
-    if (!(t instanceof HTMLInputElement) || t.type !== "number" || t.value === "") return;
+    if (!(t instanceof HTMLInputElement) || !(t.type === "number" || t.classList.contains("num-text")) || t.value === "") return;
     t.dataset.prev = t.value;
     t.dataset.ph = t.placeholder || "";
     t.placeholder = t.value;
@@ -1070,23 +1075,51 @@
   });
 
   // ---------- Crear alimento ----------
+  // Los valores se cargan como figuran en el envase (por porcion de X g o ml) y se guardan por 100 g.
+  const MAN_FIELDS = ["manName", "manServing", "manKcal", "manProtein", "manCarbs", "manFat"];
+
+  function manualValues() {
+    const serving = parseNum($("manServing").value);
+    const k = serving > 0 ? 100 / serving : 0;
+    const per100 = (id) => Math.round(parseNum($(id).value) * k * 100) / 100;
+    return {
+      serving,
+      kcal: per100("manKcal"), protein: per100("manProtein"),
+      carbs: per100("manCarbs"), fat: per100("manFat")
+    };
+  }
+
+  function updateManualPreview() {
+    const v = manualValues();
+    const box = $("manPreview");
+    if (!(v.serving > 0) || v.serving === 100) { box.hidden = true; return; }
+    box.hidden = false;
+    box.textContent = `Se guarda por cada 100 g: ${fmtG(v.kcal)} kcal · ${fmtG(v.protein)} g prot · ` +
+      `${fmtG(v.carbs)} g carb · ${fmtG(v.fat)} g grasas. Además vas a poder cargarlo por porciones de ${fmtG(v.serving)} g.`;
+  }
+
   function openManualModal(hint) {
-    ["manName", "manKcal", "manProtein", "manCarbs", "manFat"].forEach(id => $(id).value = "");
-    $("manualHint").textContent = hint || "Valores por cada 100 g del alimento";
+    MAN_FIELDS.forEach(id => $(id).value = "");
+    $("manServing").value = "100";
+    $("manualHint").textContent = hint || "Copiá los valores tal como figuran en el envase";
+    updateManualPreview();
     $("manualModal").hidden = false;
   }
+
+  MAN_FIELDS.slice(1).forEach(id => $(id).addEventListener("input", updateManualPreview));
 
   $("manualCancel").addEventListener("click", () => { $("manualModal").hidden = true; state.pendingBarcode = null; });
 
   $("manualNext").addEventListener("click", () => {
     const name = $("manName").value.trim();
     if (!name) { $("manName").focus(); return; }
+    const v = manualValues();
+    if (!(v.serving > 0)) { showToast("Indicá por cuántos gramos son los valores"); $("manServing").focus(); return; }
     const food = FoodApi.makeCustomFood({
       name,
-      kcal: parseFloat($("manKcal").value) || 0,
-      protein: parseFloat($("manProtein").value) || 0,
-      carbs: parseFloat($("manCarbs").value) || 0,
-      fat: parseFloat($("manFat").value) || 0,
+      kcal: v.kcal, protein: v.protein, carbs: v.carbs, fat: v.fat,
+      unitGrams: v.serving !== 100 ? v.serving : null,
+      unitName: "porción",
       barcode: state.pendingBarcode,
       source: "created"
     });
@@ -1171,7 +1204,7 @@
   });
   $("nfCreate").addEventListener("click", () => {
     closeNotFound();
-    openManualModal("Cargalo con los datos de la etiqueta (por 100 g) y lo vamos a recordar para la próxima.");
+    openManualModal("Cargalo con los datos de la etiqueta y lo vamos a recordar para la próxima.");
   });
   $("nfSearch").addEventListener("click", () => {
     closeNotFound();

@@ -422,6 +422,7 @@ svg { display: block; }
   width: 100%; max-width: 480px;
   border-radius: 34px 34px 0 0;
   padding: 12px 22px calc(26px + var(--safe-bottom));
+  max-height: 94vh; overflow-y: auto;
 }
 .modal-handle { width: 42px; height: 5px; background: #48484a; border-radius: 3px; margin: 4px auto 18px; }
 .modal-sheet h3 { margin: 0 0 4px; font-size: 24px; font-weight: 800; }
@@ -438,11 +439,11 @@ svg { display: block; }
 .field { display: flex; flex-direction: column; gap: 8px; font-size: 15px; font-weight: 600; color: var(--text-dim); margin-bottom: 14px; }
 .field:last-child { margin-bottom: 0; }
 .field input {
-  height: 50px; padding: 0 16px; border-radius: 18px; border: none; background: var(--card-2);
+  width: 100%; min-width: 0; height: 50px; padding: 0 16px; border-radius: 18px; border: none; background: var(--card-2);
   color: var(--text); font-size: 18px; font-weight: 500;
 }
 .field input:focus { outline: 2px solid var(--accent); }
-.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+.field-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 12px; }
 
 /* ---------- Ajustes ---------- */
 .slider-row { margin-bottom: 20px; }
@@ -525,7 +526,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
   width: 42px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.3);
 }
-input[type="number"]::placeholder { color: var(--text-dim); opacity: 1; }
+input[type="number"]::placeholder, .num-text::placeholder { color: var(--text-dim); opacity: 1; }
+.unit-input { display: flex; align-items: center; gap: 12px; }
+.unit-input input { flex: 1; min-width: 0; }
+.unit-label { color: var(--text-dim); font-size: 16px; font-weight: 600; white-space: nowrap; }
+.man-preview { margin: 14px 0 0; }
 
 /* ---------- Animaciones ---------- */
 @keyframes overlayIn { from { background: rgba(0,0,0,0); } to { background: rgba(0,0,0,.6); } }

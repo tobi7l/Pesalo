@@ -7,7 +7,7 @@ PWA simple para contar calorias y macros diarios (estilo Fitia), instalable en i
 1. Abrir la URL de GitHub Pages en Safari (iPhone).
 2. Agregar a inicio para que funcione como app instalada.
 3. En **Ajustes**, definir el objetivo de calorias y la distribucion de macros.
-4. En **Agregar**, buscar el alimento, indicar los gramos y confirmar. Si no aparece, se puede cargar manualmente con sus valores por 100 g - queda guardado para futuras busquedas.
+4. En **Agregar**, buscar el alimento, indicar los gramos y confirmar. Si no aparece, se puede cargar manualmente con los valores del envase (por 100 g o por porcion) - queda guardado para futuras busquedas.
 
 La base de alimentos es local: una lista propia de alimentos comunes y cortes de carne, mas una base de productos envasados de Argentina (`data/ar-products.json`, derivada de Open Food Facts) y todo lo que el usuario carga manualmente. El escaner de codigos de barras primero busca en esa base local (sin internet) y recien despues consulta Open Food Facts. Todos los datos (comidas cargadas, ajustes, alimentos guardados) se guardan solo en el navegador del dispositivo (localStorage) - no hay backend ni servidor propio.
 
