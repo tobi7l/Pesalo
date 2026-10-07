@@ -11,6 +11,9 @@ import json
 import os
 import sys
 
+# Productos descartados a mano (datos dudosos); no vuelven al regenerar la base.
+EXCLUDE_CODES = set(['77965233', '7798044150777'])
+
 REGION_PREFIXES = ("773", "775", "777", "778", "779", "780", "784", "786", "789", "790")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -30,7 +33,7 @@ with open(SRC, encoding="utf-8") as fh:
         if not (p["c"].startswith(REGION_PREFIXES) or p.get("nc", 99) == 1):
             continue
         key = (p["n"].lower(), p["b"].lower())
-        if p["c"] in seen_codes or key in seen_names:
+        if p["c"] in EXCLUDE_CODES or p["c"] in seen_codes or key in seen_names:
             continue
         seen_codes.add(p["c"])
         seen_names.add(key)
